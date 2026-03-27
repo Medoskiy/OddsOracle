@@ -809,26 +809,34 @@ function renderCrawlerStatus() {
   }).join('');
 }
 
-// Sport filter tabs
-document.querySelectorAll('[data-sport]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('[data-sport]').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeSport = btn.dataset.sport;
-    renderEvents(activeSport, document.getElementById('valueOnly').checked);
-  });
-});
-
-document.getElementById('valueOnly').addEventListener('change', e => {
-  renderEvents(activeSport, e.target.checked);
-});
-
+// ── Sport tabs, value filter & refresh are handled by live-odds.js ──
+// Fallback: if live-odds.js not loaded yet, show simulated events
 document.getElementById('refreshBtn').addEventListener('click', () => {
-  logIndex = 0;
-  document.getElementById('crawlerLog').innerHTML = '<div class="log-line"><span class="log-ts">[00:00:00]</span> <span class="log-scan">Re-initializing crawler...</span></div>';
-  allPredictions = [];
-  document.getElementById('eventsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-spinner fa-spin" style="font-size:24px;margin-bottom:12px"></i><p>Scanning sportsbooks...</p></div>';
-  setTimeout(addLogLine, 300);
+  if (window.OddsEngine) {
+    window.OddsEngine.refresh();
+  } else {
+    document.getElementById('eventsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-spinner fa-spin" style="font-size:24px;margin-bottom:12px"></i><p>Rescanning sportsbooks...</p></div>';
+    setTimeout(() => renderEvents(activeSport, document.getElementById('valueOnly').checked), 800);
+  }
+});
+
+// Value-only filter works with both live and simulated data
+document.getElementById('valueOnly').addEventListener('change', e => {
+  if (window.OddsEngine) {
+    const events = window.OddsEngine.getEvents();
+    const filtered = e.target.checked ? events.filter(ev => ev.hasValueBet) : events;
+    // Re-render filtered list using live engine renderer
+    const container = document.getElementById('eventsList');
+    if (container && filtered.length) {
+      container.innerHTML = filtered.map(ev => {
+        /* minimal fallback — full render is in live-odds.js */
+        return `<div class="event-card"><div class="event-header"><div class="event-teams">${ev.match}</div></div></div>`;
+      }).join('');
+      window.OddsEngine.refresh(); /* let full engine re-render */
+    }
+  } else {
+    renderEvents(activeSport, e.target.checked);
+  }
 });
 
 // ── Crash Game Engine ──────────────────────────────────────────
@@ -947,5 +955,8 @@ updateCrashStats();
 // Start
 setTimeout(addLogLine, 500);
 </script>
+
+<!-- Live Odds Engine — fetches real data from The Odds API via PHP proxy -->
+<script src="js/live-odds.js"></script>
 </body>
 </html>
