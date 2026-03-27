@@ -420,9 +420,13 @@
      ══════════════════════════════════════════════════ */
 
   function init() {
-    /* Wait for DOM */
-    if (!document.getElementById('eventsList')) return;
-
+    const container = document.getElementById('eventsList');
+    if (!container) {
+      console.warn('OddsEngine: #eventsList not found, retrying in 500ms');
+      setTimeout(init, 500);
+      return;
+    }
+    console.log('OddsEngine: initialised — fetching live odds…');
     bindSportTabs();
     loadEvents(activeSport);
     refreshTimer = setInterval(() => loadEvents(activeSport), REFRESH_MS);
@@ -447,11 +451,11 @@
   /* Fix variable name typo used in tab click handler */
   let activeSport = 'all';
 
-  /* Script loads at bottom of body — DOM is already ready */
+  /* Script loads at bottom of body — wait a tick for all inline scripts to finish */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 300));
   } else {
-    init();
+    setTimeout(init, 300);
   }
 
   /* Public API */
