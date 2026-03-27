@@ -219,10 +219,27 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing in...';
   btn.disabled = true;
 
-  setTimeout(() => {
-    showToast(`Welcome back, ${label}! Redirecting...`, 'success');
-    setTimeout(() => window.location.href = 'predictions.html', 1200);
-  }, 1500);
+  fetch('api/login.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: identifier, password: pass }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      showToast(data.message, 'success');
+      setTimeout(() => window.location.href = data.redirect || 'predictions.html', 1200);
+    } else {
+      showToast(data.message || 'Login failed. Please try again.', 'error');
+      btn.innerHTML = '<i class="fa fa-sign-in-alt"></i> Sign In';
+      btn.disabled = false;
+    }
+  })
+  .catch(() => {
+    showToast('Network error — please try again.', 'error');
+    btn.innerHTML = '<i class="fa fa-sign-in-alt"></i> Sign In';
+    btn.disabled = false;
+  });
 });
 
 // Live activity feed

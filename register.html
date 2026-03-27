@@ -349,10 +349,34 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating @' + username + '...';
   btn.disabled = true;
 
-  setTimeout(() => {
-    showToast(`Welcome to OddsOracle, @${username}! 🎉`, 'success');
-    setTimeout(() => window.location.href = 'predictions.html', 1600);
-  }, 1800);
+  fetch('api/register.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username,
+      email,
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName:  document.getElementById('lastName').value.trim(),
+      password:  pass,
+      confirm,
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      showToast(`Welcome to OddsOracle, @${username}! 🎉`, 'success');
+      setTimeout(() => window.location.href = data.redirect || 'predictions.html', 1400);
+    } else {
+      showToast(data.message || 'Registration failed. Please try again.', 'error');
+      btn.innerHTML = '<i class="fa fa-rocket"></i> Create Free Account';
+      btn.disabled = false;
+    }
+  })
+  .catch(() => {
+    showToast('Network error — please try again.', 'error');
+    btn.innerHTML = '<i class="fa fa-rocket"></i> Create Free Account';
+    btn.disabled = false;
+  });
 });
 </script>
 </body>
