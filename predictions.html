@@ -107,116 +107,115 @@
   #crashStatsGrid { grid-template-columns: repeat(4,1fr) !important; }
 }
 
-/* ── Tablet portrait (481px–768px) ── */
+/* ── Tablet portrait + Mobile shared base (≤768px) ── */
 @media (max-width: 768px) {
-  .main-layout { grid-template-columns: 1fr !important; margin-top: 60px !important; padding: 14px 0 48px; }
+  .main-layout { grid-template-columns: 1fr !important; margin-top: 60px !important; padding: 12px 0 48px; }
   .sidebar { display: none !important; }
 
-  /* Stats bar 2×2 */
-  .stats-bar { display: grid !important; grid-template-columns: 1fr 1fr !important; border-radius: 10px; overflow: hidden; }
-  .stat-item { border-right: none !important; border-bottom: 1px solid var(--border) !important; padding: 12px 10px !important; }
+  /* ── Stats bar: 2×2 grid, no text overflow ── */
+  .stats-bar { display: grid !important; grid-template-columns: 1fr 1fr !important;
+    border-radius: 10px; overflow: visible !important; }
+  .stat-item { border-right: none !important; border-bottom: 1px solid var(--border) !important;
+    padding: 10px 8px !important; min-width: 0; overflow: hidden; }
   .stat-item:nth-child(odd) { border-right: 1px solid var(--border) !important; }
   .stat-item:nth-last-child(1), .stat-item:nth-last-child(2) { border-bottom: none !important; }
-  .stat-val { font-size: 18px !important; }
-  .stat-lbl { font-size: 10px !important; }
+  .stat-val { font-size: 17px !important; }
+  .stat-lbl { font-size: 9px !important; letter-spacing: 0.5px !important;
+    white-space: normal !important; word-break: break-word; line-height: 1.3; }
 
-  /* Crawler */
-  .card-header { flex-wrap: wrap !important; gap: 8px !important; }
-  .crawler-log { font-size: 11px; max-height: 140px; }
-  #crawlerStatus { gap: 5px !important; }
+  /* ── Crawler: prevent log lines overflowing ── */
+  .card { overflow: hidden; }
+  .card-header { flex-wrap: wrap !important; gap: 6px !important; }
+  .crawler-log { font-size: 10px; max-height: 130px; overflow-x: hidden; }
+  .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  #crawlerStatus { gap: 5px !important; overflow: hidden; }
 
-  /* Crash */
-  .crash-section { padding: 14px; }
-  .crash-display { font-size: 32px !important; padding: 14px; }
+  /* ── Crash game ── */
+  .crash-section { padding: 14px; overflow: hidden; }
+  .crash-display { font-size: 30px !important; padding: 12px; }
   #crashStatsGrid { grid-template-columns: repeat(2,1fr) !important; gap: 8px !important; }
-  .crash-section .flex-between { flex-wrap: wrap; gap: 8px; }
+  .crash-section .flex-between { flex-wrap: wrap !important; gap: 8px; }
+  #crashBookTabs { flex-wrap: wrap !important; gap: 5px !important; }
+  #crashBookTabs .btn { font-size: 10px !important; padding: 6px 10px !important; }
 
-  /* Sport filter tabs — horizontal scroll */
-  .filter-bar { gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  /* ── Sport filter tabs ── */
+  .filter-bar { gap: 8px; flex-wrap: wrap; margin-bottom: 14px; overflow: visible; }
   #sportTabs { overflow-x: auto !important; flex-wrap: nowrap !important; display: flex !important;
-    gap: 4px; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    gap: 4px; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    min-width: 0; max-width: 100%; }
   #sportTabs::-webkit-scrollbar { display: none; }
-  .tab-btn { flex-shrink: 0 !important; white-space: nowrap; padding: 7px 12px; font-size: 12px; }
+  .tab-btn { flex-shrink: 0 !important; white-space: nowrap; padding: 7px 10px; font-size: 11px; }
+  .filter-bar > div:last-child { width: 100%; justify-content: space-between; gap: 8px; }
 
-  /* Event cards */
-  .event-card { padding: 14px; margin-bottom: 12px; }
+  /* ── Event cards ── */
+  .event-card { padding: 13px; margin-bottom: 10px; overflow: hidden; }
   .event-card:hover { transform: none; }
-  .event-teams { font-size: 13px !important; }
-  .event-meta { gap: 6px; }
-  .event-header > div:last-child { gap: 4px !important; }
+  .event-teams { font-size: 13px !important; line-height: 1.3; word-break: break-word; }
+  .event-meta { gap: 5px; flex-wrap: wrap; }
+  .event-header > div:last-child { flex-shrink: 0; gap: 4px !important; }
 
-  /* Odds */
+  /* ── Odds grid ── */
   .odds-grid { grid-template-columns: repeat(3,1fr) !important; gap: 4px; }
   .odds-grid.two-col { grid-template-columns: repeat(2,1fr) !important; }
-  .odds-cell { padding: 7px 4px; }
+  .odds-cell { padding: 6px 3px; }
+  .odds-cell .odds-label { font-size: 8px; }
   .odds-cell .odds-val { font-size: 12px; }
 
-  /* Prediction box */
-  .pred-box { padding: 12px; }
-  .pred-outcome { font-size: 15px !important; }
-  .pred-meta-row { gap: 8px; margin-bottom: 6px; }
+  /* ── Prediction box ── */
+  .pred-box { padding: 11px; }
+  .pred-outcome { font-size: 14px !important; }
+  .pred-meta-row { gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 
-  /* Books */
-  .books-grid { grid-template-columns: repeat(2,1fr); gap: 5px; }
+  /* ── Bookmaker grid ── */
+  .books-grid { grid-template-columns: repeat(2,1fr); gap: 4px; }
   .book-row { padding: 6px 8px; font-size: 11px; }
-
-  /* Value filter row */
-  .filter-bar > div:last-child { width: 100%; justify-content: space-between; }
 }
 
 /* ── Mobile (≤480px) ── */
 @media (max-width: 480px) {
-  .main-layout { padding: 10px 0 40px; margin-top: 60px !important; }
+  .main-layout { padding: 10px 0 36px; }
 
-  /* Stats bar single column on very small */
-  .stat-val { font-size: 16px !important; }
+  /* Stats */
+  .stat-val { font-size: 15px !important; }
+  .stat-lbl { font-size: 8px !important; }
 
-  /* Event cards */
-  .event-card { padding: 12px; margin-bottom: 10px; border-radius: 10px; }
-  .event-card:hover { transform: none; box-shadow: none; }
-  .event-header { flex-direction: column !important; gap: 8px; }
+  /* Event cards — stack header */
+  .event-card { padding: 11px; margin-bottom: 10px; border-radius: 10px; }
+  .event-header { flex-direction: column !important; gap: 6px; }
   .event-header > div:last-child { flex-direction: row !important; align-items: center !important;
     width: 100%; gap: 8px !important; }
-  .event-teams { font-size: 13px !important; line-height: 1.3; }
+  .event-teams { font-size: 12px !important; }
 
   /* Odds: 2-col */
-  .odds-grid { grid-template-columns: repeat(2,1fr) !important; gap: 4px; }
-  .odds-grid.two-col { grid-template-columns: repeat(2,1fr) !important; }
+  .odds-grid { grid-template-columns: repeat(2,1fr) !important; gap: 3px; }
   .odds-cell .odds-label { font-size: 8px; }
-  .odds-cell .odds-val { font-size: 12px; }
+  .odds-cell .odds-val { font-size: 11px; }
 
-  /* Prediction box */
-  .pred-box { padding: 10px; }
+  /* Pred box */
+  .pred-box { padding: 9px; }
   .pred-outcome { font-size: 13px !important; }
-  .pred-meta-row { flex-wrap: wrap; gap: 6px; margin-bottom: 5px; }
   .pred-meta-row > span { font-size: 11px !important; }
 
-  /* Books single col */
+  /* Books: single col */
   .books-grid { grid-template-columns: 1fr !important; }
-  .book-row { font-size: 11px; }
 
   /* Crash */
   .crash-display { font-size: 24px !important; padding: 10px; }
-  .crash-section { padding: 12px; }
-  #crashStatsGrid { grid-template-columns: repeat(2,1fr) !important; gap: 6px !important; }
-  #crashStatsGrid > div { padding: 8px 6px !important; }
-  #crashStatsGrid > div > div:last-child { font-size: 15px !important; }
+  #crashStatsGrid > div { padding: 7px 5px !important; }
+  #crashStatsGrid > div > div:last-child { font-size: 14px !important; }
 
   /* Crawler */
-  .crawler-log { font-size: 10px; max-height: 120px; }
-
-  /* Filter value row */
-  .filter-bar > div:last-child { width: 100%; justify-content: space-between; }
-  #sportTabs { padding-bottom: 4px; }
+  .crawler-log { font-size: 10px; max-height: 110px; }
 }
 
 /* ── Small mobile (≤360px) ── */
 @media (max-width: 360px) {
-  .event-card { padding: 10px; }
-  .event-teams { font-size: 12px !important; }
+  .event-card { padding: 9px; }
+  .event-teams { font-size: 11px !important; }
   .pred-outcome { font-size: 12px !important; }
-  .odds-cell .odds-val { font-size: 11px; }
+  .odds-cell .odds-val { font-size: 10px; }
   .crash-display { font-size: 20px !important; }
+  .tab-btn { padding: 6px 8px; font-size: 10px; }
 }
 </style>
 </head>
