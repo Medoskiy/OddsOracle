@@ -51,6 +51,45 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ---- Auth-aware navbar ----
+(function updateNavForAuth() {
+  fetch('api/auth-check.php')
+    .then(r => r.json())
+    .then(auth => {
+      if (!auth.logged_in) return; // keep default Login/Sign Up buttons
+
+      /* Desktop nav actions — replace Login + Sign Up with Dashboard + Logout */
+      const navActions = document.querySelector('.nav-actions');
+      if (navActions) {
+        const loginBtn  = navActions.querySelector('a[href="login.html"]');
+        const signupBtn = navActions.querySelector('a[href="register.html"]');
+        if (loginBtn) {
+          loginBtn.href      = 'dashboard.html';
+          loginBtn.innerHTML = '<i class="fa fa-user"></i> @' + auth.username;
+          loginBtn.className = 'btn btn-ghost btn-sm';
+        }
+        if (signupBtn) {
+          signupBtn.href      = 'api/logout.php';
+          signupBtn.innerHTML = 'Logout';
+          signupBtn.className = 'btn btn-ghost btn-sm';
+        }
+      }
+
+      /* Mobile nav — replace Login + Sign Up buttons */
+      const mobileLogin  = document.querySelector('.hide-desktop a[href="login.html"]');
+      const mobileSignup = document.querySelector('.hide-desktop a[href="register.html"]');
+      if (mobileLogin) {
+        mobileLogin.href      = 'dashboard.html';
+        mobileLogin.textContent = 'Dashboard';
+      }
+      if (mobileSignup) {
+        mobileSignup.href      = 'api/logout.php';
+        mobileSignup.textContent = 'Logout';
+      }
+    })
+    .catch(() => {}); // silently fail — keep default buttons
+})();
+
 // ---- Sportsbook data ----
 const SPORTSBOOKS = [
   'DraftKings','FanDuel','BetMGM','Caesars','bet365','PointsBet','Unibet','William Hill',

@@ -64,7 +64,7 @@ $_SESSION['plan']     = $user['plan'];
 echo json_encode([
     'success'  => true,
     'message'  => 'Welcome back, @' . $user['username'] . '!',
-    'redirect' => '../predictions.html',
+    'redirect' => '../dashboard.html',
     'user'     => [
         'username' => $user['username'],
         'plan'     => $user['plan'],

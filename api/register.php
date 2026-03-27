@@ -80,6 +80,6 @@ welcomeEmail($username, $email);
 echo json_encode([
     'success'  => true,
     'message'  => 'Account created! Check your email for a welcome message.',
-    'redirect' => '../predictions.html',
+    'redirect' => '../dashboard.html',
     'user'     => ['username' => $username, 'plan' => 'free'],
 ]);
