@@ -131,4 +131,20 @@ if ($action === 'quota') {
     exit;
 }
 
+/* ── ACTION: test connection ── */
+if ($action === 'test') {
+    $configured = defined('ODDS_API_KEY') && ODDS_API_KEY !== 'YOUR_API_KEY_HERE';
+    $url    = ODDS_API_BASE . '/sports/?apiKey=' . ODDS_API_KEY;
+    $result = fetchURL($url);
+    echo json_encode([
+        'configured' => $configured,
+        'api_status' => $result['code'],
+        'api_ok'     => $result['code'] === 200,
+        'php_ok'     => true,
+        'curl_ok'    => function_exists('curl_init'),
+        'message'    => $result['code'] === 200 ? 'API connection successful!' : 'API error: ' . $result['code'],
+    ]);
+    exit;
+}
+
 echo json_encode(['error' => 'Unknown action']);

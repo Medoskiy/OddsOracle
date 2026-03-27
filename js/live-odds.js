@@ -407,7 +407,7 @@
       btn.addEventListener('click', () => {
         tabs.querySelectorAll('[data-sport]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        activesport = btn.dataset.sport;
+        activeSport = btn.dataset.sport;
         clearInterval(refreshTimer);
         loadEvents(activeSport);
         refreshTimer = setInterval(() => loadEvents(activeSport), REFRESH_MS);
@@ -447,7 +447,12 @@
   /* Fix variable name typo used in tab click handler */
   let activeSport = 'all';
 
-  document.addEventListener('DOMContentLoaded', init);
+  /* Script loads at bottom of body — DOM is already ready */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 
   /* Public API */
   window.OddsEngine = {
