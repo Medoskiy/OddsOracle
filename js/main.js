@@ -51,41 +51,63 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ---- Clear auth cache on logout ----
+if (window.location.search.includes('logout=1')) {
+  sessionStorage.removeItem('oo_auth');
+  history.replaceState(null, '', window.location.pathname);
+}
+
 // ---- Auth-aware navbar ----
 (function updateNavForAuth() {
+  function applyAuthNav(auth) {
+    if (!auth || !auth.logged_in) return;
+
+    /* Desktop nav actions — replace Login + Sign Up with Dashboard + Logout */
+    const navActions = document.querySelector('.nav-actions');
+    if (navActions) {
+      const loginBtn  = navActions.querySelector('a[href="login.html"]');
+      const signupBtn = navActions.querySelector('a[href="register.html"]');
+      if (loginBtn) {
+        loginBtn.href      = 'dashboard.html';
+        loginBtn.innerHTML = '<i class="fa fa-user"></i> @' + auth.username;
+        loginBtn.className = 'btn btn-ghost btn-sm';
+      }
+      if (signupBtn) {
+        signupBtn.href      = 'api/logout.php';
+        signupBtn.innerHTML = 'Logout';
+        signupBtn.className = 'btn btn-ghost btn-sm';
+      }
+    }
+
+    /* Mobile nav — replace Login + Sign Up buttons */
+    const mobileLogin  = document.querySelector('.hide-desktop a[href="login.html"]');
+    const mobileSignup = document.querySelector('.hide-desktop a[href="register.html"]');
+    if (mobileLogin) {
+      mobileLogin.href        = 'dashboard.html';
+      mobileLogin.textContent = 'Dashboard';
+    }
+    if (mobileSignup) {
+      mobileSignup.href        = 'api/logout.php';
+      mobileSignup.textContent = 'Logout';
+    }
+  }
+
+  /* Apply instantly from cache so there's zero flash of logged-out state */
+  try {
+    const cached = sessionStorage.getItem('oo_auth');
+    if (cached) applyAuthNav(JSON.parse(cached));
+  } catch (e) {}
+
+  /* Then verify with server and refresh cache */
   fetch('api/auth-check.php')
     .then(r => r.json())
     .then(auth => {
-      if (!auth.logged_in) return; // keep default Login/Sign Up buttons
-
-      /* Desktop nav actions — replace Login + Sign Up with Dashboard + Logout */
-      const navActions = document.querySelector('.nav-actions');
-      if (navActions) {
-        const loginBtn  = navActions.querySelector('a[href="login.html"]');
-        const signupBtn = navActions.querySelector('a[href="register.html"]');
-        if (loginBtn) {
-          loginBtn.href      = 'dashboard.html';
-          loginBtn.innerHTML = '<i class="fa fa-user"></i> @' + auth.username;
-          loginBtn.className = 'btn btn-ghost btn-sm';
-        }
-        if (signupBtn) {
-          signupBtn.href      = 'api/logout.php';
-          signupBtn.innerHTML = 'Logout';
-          signupBtn.className = 'btn btn-ghost btn-sm';
-        }
+      if (auth.logged_in) {
+        sessionStorage.setItem('oo_auth', JSON.stringify(auth));
+      } else {
+        sessionStorage.removeItem('oo_auth');
       }
-
-      /* Mobile nav — replace Login + Sign Up buttons */
-      const mobileLogin  = document.querySelector('.hide-desktop a[href="login.html"]');
-      const mobileSignup = document.querySelector('.hide-desktop a[href="register.html"]');
-      if (mobileLogin) {
-        mobileLogin.href      = 'dashboard.html';
-        mobileLogin.textContent = 'Dashboard';
-      }
-      if (mobileSignup) {
-        mobileSignup.href      = 'api/logout.php';
-        mobileSignup.textContent = 'Logout';
-      }
+      applyAuthNav(auth);
     })
     .catch(() => {}); // silently fail — keep default buttons
 })();
