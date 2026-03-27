@@ -434,13 +434,20 @@ footer {
   .page-hero p { font-size: 14px; }
 
   /* Stats bar — 2×2 grid */
-  .stats-bar { flex-wrap: wrap; border-radius: 10px; }
-  .stat-item { flex: 1 1 45%; border-right: none; border-bottom: 1px solid var(--border); padding: 12px; }
-  .stat-item:nth-child(odd) { border-right: 1px solid var(--border); }
+  .stats-bar { display: grid !important; grid-template-columns: 1fr 1fr !important;
+    flex-wrap: wrap; border-radius: 10px; overflow: visible !important; }
+  .stat-item { flex: 1 1 45%; border-right: none !important; border-bottom: 1px solid var(--border) !important;
+    padding: 10px 8px !important; min-width: 0; overflow: hidden; }
+  .stat-item:nth-child(odd) { border-right: 1px solid var(--border) !important; }
   .stat-item:last-child,
-  .stat-item:nth-last-child(2):nth-child(odd) { border-bottom: none; }
-  .stat-val { font-size: 18px; }
-  .stat-lbl { font-size: 10px; }
+  .stat-item:nth-last-child(2):nth-child(odd) { border-bottom: none !important; }
+  .stat-val { font-size: 17px; }
+  .stat-lbl { font-size: 9px !important; letter-spacing: 0.5px !important;
+    white-space: normal !important; word-break: break-word; line-height: 1.3; }
+
+  /* Crawler log — prevent horizontal overflow */
+  .crawler-log { overflow-x: hidden !important; }
+  .log-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
   /* Cards */
   .card { padding: 16px; }
@@ -928,6 +935,26 @@ html, body { max-width: 100vw; overflow-x: hidden; }
   .win-notify-match { font-size: 14px; }
   .win-notify-meta { gap: 5px; font-size: 11px; }
   .win-notify-odds { font-size: 11px; }
+}
+
+/* ── Win notification — move to BOTTOM on all mobile so it never covers content ── */
+@media (max-width: 768px) {
+  .win-notify {
+    top: auto !important;
+    bottom: 16px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(140%) !important;
+    width: calc(100% - 24px) !important;
+    border-top: 1px solid rgba(0,255,136,0.45) !important;
+    border-bottom: 2px solid var(--accent-green) !important;
+    border-radius: 14px !important;
+  }
+  .win-notify.show {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+  .win-notify.hide {
+    transform: translateX(-50%) translateY(140%) !important;
+  }
 }
 
 /* ---- Glow line ---- */
