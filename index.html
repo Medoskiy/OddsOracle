@@ -134,7 +134,7 @@
   <div class="hero-bg"></div>
   <div class="hero-grid-lines"></div>
   <div class="container" style="position:relative;z-index:2">
-    <div style="display:grid;grid-template-columns:1fr auto;gap:60px;align-items:center">
+    <div class="hero-cols">
       <div class="hero-content">
         <div class="hero-eyebrow"><i class="fa fa-bolt"></i> Powered by Claude AI + Live Web Crawlers</div>
         <h1>The World's Most Accurate <span>Sports Betting</span> Intelligence Platform</h1>
@@ -144,19 +144,19 @@
           <a href="predictions.html" class="btn btn-ghost btn-lg"><i class="fa fa-eye"></i> Live Predictions</a>
         </div>
         <div class="hero-stats">
-          <div>
+          <div class="hero-stat-item">
             <div class="hero-stat-val" id="statAccuracy">78</div>
             <div class="hero-stat-lbl">% Avg Accuracy</div>
           </div>
-          <div style="border-left:1px solid var(--border);padding-left:32px">
+          <div class="hero-stat-item" style="border-left:1px solid var(--border);padding-left:32px">
             <div class="hero-stat-val" id="statBooks">8</div>
             <div class="hero-stat-lbl">Sportsbooks Scanned</div>
           </div>
-          <div style="border-left:1px solid var(--border);padding-left:32px">
+          <div class="hero-stat-item" style="border-left:1px solid var(--border);padding-left:32px">
             <div class="hero-stat-val" id="statEvents">2.4K</div>
             <div class="hero-stat-lbl">Events/Day</div>
           </div>
-          <div style="border-left:1px solid var(--border);padding-left:32px">
+          <div class="hero-stat-item" style="border-left:1px solid var(--border);padding-left:32px">
             <div class="hero-stat-val" id="statUsers">12K</div>
             <div class="hero-stat-lbl">Active Users</div>
           </div>
@@ -164,7 +164,7 @@
       </div>
 
       <!-- Mini dashboard preview -->
-      <div style="width:360px;flex-shrink:0" class="reveal" id="heroVisual">
+      <div class="reveal" id="heroVisual">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,0.5)">
           <div class="flex-between mb-16">
             <span style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-secondary)">LIVE PREDICTIONS</span>
