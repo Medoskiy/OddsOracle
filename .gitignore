@@ -23,6 +23,8 @@ secrets.json
 
 # API config — contains secret keys, never commit
 api/config.php
+api/mailer.php
+api/db.php
 api/cache/
 
 # Build output (if added later)

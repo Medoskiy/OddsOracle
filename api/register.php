@@ -73,9 +73,13 @@ $_SESSION['user_id']  = $userId;
 $_SESSION['username'] = $username;
 $_SESSION['plan']     = 'free';
 
+/* ── Send welcome email (non-blocking — don't fail registration if email fails) ── */
+require_once __DIR__ . '/mailer.php';
+welcomeEmail($username, $email);
+
 echo json_encode([
     'success'  => true,
-    'message'  => 'Account created successfully! Welcome to OddsOracle.',
+    'message'  => 'Account created! Check your email for a welcome message.',
     'redirect' => '../predictions.html',
     'user'     => ['username' => $username, 'plan' => 'free'],
 ]);
