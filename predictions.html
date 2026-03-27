@@ -7,9 +7,11 @@
 <link rel="stylesheet" href="css/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-.main-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; margin-top: 80px; padding: 24px 0 60px; }
+.main-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; margin-top: 80px; padding: 24px 0 60px; min-width: 0; }
 @media(max-width:1024px){ .main-layout { grid-template-columns:1fr; } .sidebar { display:none; } }
 .sidebar { position: sticky; top: 84px; height: fit-content; }
+/* Prevent any child from blowing out the page width */
+.main-layout > * { min-width: 0; overflow-x: hidden; }
 
 /* Crawler progress */
 .crawler-log { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; max-height: 220px; overflow-y: auto; }
@@ -281,7 +283,7 @@
         <div class="crawler-log" id="crawlerLog">
           <div class="log-line"><span class="log-ts">[00:00:00]</span> <span class="log-scan">Initializing OddsOracle crawler v4.2 — 19 sportsbooks queued...</span></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:14px" id="crawlerStatus">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:14px;min-width:0;overflow:hidden" id="crawlerStatus">
           <!-- filled by JS -->
         </div>
       </div>
@@ -639,6 +641,20 @@ function renderEvents(filter = 'all', valueOnly = false) {
           </div>
         </div>
         <div class="conf-bar mt-8"><div class="conf-fill ${p.conf>=80?'conf-high':p.conf>=72?'conf-mid':'conf-low'}" style="width:${p.conf}%"></div></div>
+        <button class="save-pick-btn"
+          data-match="${encodeURIComponent(p.home+' vs '+p.away)}"
+          data-sport="${encodeURIComponent(p.sport)}"
+          data-league="${encodeURIComponent(p.league)}"
+          data-pick="${encodeURIComponent(p.predicted)}"
+          data-odds="${p.bestOdds[p.predIdx]}"
+          data-conf="${p.conf}"
+          onclick="OddsEngine && OddsEngine.savePick ? OddsEngine.savePick(this) : alert('Please refresh the page.')"
+          style="margin-top:12px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
+                 border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
+                 font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;
+                 display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="fa fa-bookmark"></i> Save This Pick
+        </button>
       </div>`;
 
     div.addEventListener('click', () => selectEvent(p.id));
@@ -844,7 +860,10 @@ function addLogLine() {
 
 function initEvents() {
   allPredictions = EVENTS_DATA.map(buildPrediction);
-  renderEvents(activeSport, document.getElementById('valueOnly').checked);
+  /* Only render simulated cards if live-odds.js has NOT already loaded real data */
+  if (!window.OddsEngine || !window.OddsEngine.isLive()) {
+    renderEvents(activeSport, document.getElementById('valueOnly').checked);
+  }
   renderCrawlerStatus();
 }
 
