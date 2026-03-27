@@ -251,6 +251,14 @@
       ? `<span class="live-badge"><span class="live-dot"></span> LIVE</span>`
       : `<span class="badge" style="font-size:10px;background:var(--bg-secondary)">🕐 ${ev.kickoff}</span>`;
 
+    /* Encode pick data into button attributes for the save handler */
+    const safeMatch  = encodeURIComponent(ev.match);
+    const safeSport  = encodeURIComponent(ev.sport);
+    const safeLeague = encodeURIComponent(ev.league);
+    const safePick   = encodeURIComponent(ev.recommended.name);
+    const odds       = ev.recommended.bestOdds;
+    const conf       = ev.confidence;
+
     return `
     <div class="event-card" data-id="${ev.id}">
       <div class="event-header">
@@ -288,6 +296,22 @@
           ⚡ Edge: <b>+${ev.recommended.edge}%</b> over market implied probability
         </div>` : ''}
         ${renderBookmakers(ev.rawBookmakers, ev.recommended)}
+
+        <!-- Save Pick Button -->
+        <button class="save-pick-btn"
+          data-match="${safeMatch}"
+          data-sport="${safeSport}"
+          data-league="${safeLeague}"
+          data-pick="${safePick}"
+          data-odds="${odds}"
+          data-conf="${conf}"
+          onclick="OddsEngine.savePick(this)"
+          style="margin-top:12px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
+                 border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
+                 font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;
+                 display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="fa fa-bookmark"></i> Save This Pick
+        </button>
       </div>
     </div>`;
   }
@@ -458,11 +482,102 @@
     setTimeout(init, 300);
   }
 
+  /* ══════════════════════════════════════════════════
+     SAVE PICK
+     ══════════════════════════════════════════════════ */
+
+  async function savePick(btn) {
+    /* Check cached auth first */
+    let loggedIn = false;
+    try {
+      const cached = sessionStorage.getItem('oo_auth');
+      if (cached) loggedIn = JSON.parse(cached).logged_in;
+    } catch (e) {}
+
+    if (!loggedIn) {
+      /* Verify with server */
+      try {
+        const r    = await fetch('api/auth-check.php');
+        const data = await r.json();
+        loggedIn   = data.logged_in;
+      } catch (e) {}
+    }
+
+    if (!loggedIn) {
+      showSaveToast('Please <a href="login.html" style="color:var(--accent-cyan)">log in</a> to save picks.', 'warn');
+      return;
+    }
+
+    /* Grab data from button attributes */
+    const payload = {
+      match_name:  decodeURIComponent(btn.dataset.match),
+      sport:       decodeURIComponent(btn.dataset.sport),
+      league:      decodeURIComponent(btn.dataset.league),
+      prediction:  decodeURIComponent(btn.dataset.pick),
+      odds:        parseFloat(btn.dataset.odds),
+      confidence:  parseInt(btn.dataset.conf, 10),
+    };
+
+    /* Disable button while saving */
+    btn.disabled   = true;
+    btn.innerHTML  = '<i class="fa fa-spinner fa-spin"></i> Saving…';
+
+    try {
+      const res  = await fetch('api/save-prediction.php', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        btn.innerHTML  = '<i class="fa fa-check"></i> Saved!';
+        btn.style.background    = 'rgba(0,255,136,0.1)';
+        btn.style.borderColor   = 'rgba(0,255,136,0.35)';
+        btn.style.color         = 'var(--accent-green)';
+        showSaveToast('Pick saved! Track it in your <a href="my-predictions.html" style="color:var(--accent-cyan)">predictions page</a>.', 'success');
+      } else if (data.duplicate) {
+        btn.innerHTML  = '<i class="fa fa-check"></i> Already Saved';
+        btn.style.color = 'var(--text-muted)';
+        showSaveToast(data.message, 'info');
+      } else {
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="fa fa-bookmark"></i> Save This Pick';
+        showSaveToast(data.message || 'Could not save pick.', 'error');
+      }
+    } catch (e) {
+      btn.disabled  = false;
+      btn.innerHTML = '<i class="fa fa-bookmark"></i> Save This Pick';
+      showSaveToast('Network error. Please try again.', 'error');
+    }
+  }
+
+  function showSaveToast(msg, type) {
+    const existing = document.getElementById('savePickToast');
+    if (existing) existing.remove();
+
+    const colors = { success: 'var(--accent-green)', warn: 'var(--accent-yellow)', error: '#ff4757', info: 'var(--accent-cyan)' };
+    const col    = colors[type] || colors.info;
+
+    const el = document.createElement('div');
+    el.id    = 'savePickToast';
+    el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:var(--bg-card);border:1px solid ${col};border-radius:10px;
+      padding:12px 20px;font-size:13px;color:var(--text-primary);
+      box-shadow:0 8px 30px rgba(0,0,0,0.4);z-index:9999;
+      animation:fadeInUp 0.3s ease;max-width:90vw;text-align:center`;
+    el.innerHTML = msg;
+    document.body.appendChild(el);
+
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+  }
+
   /* Public API */
   window.OddsEngine = {
-    refresh: () => loadEvents(activeSport),
+    refresh:  () => loadEvents(activeSport),
     getEvents: () => allEvents,
-    isLive: () => isLive,
+    isLive:   () => isLive,
+    savePick,
   };
 
 })();
