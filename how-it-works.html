@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>How It Works — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+/* ── Timeline scaffold ── */
+.timeline { position: relative; padding-left: 56px; }
+.timeline::before {
+  content:''; position:absolute; left:22px; top:0; bottom:0; width:2px;
+  background: linear-gradient(180deg,var(--accent-cyan) 0%,#7c3aed 40%,var(--accent-orange) 70%,var(--accent-green) 100%);
+}
+.timeline-item { position: relative; margin-bottom: 40px; }
+
+/* Step number bubble */
+.timeline-num {
+  position: absolute; left:-55px; top:16px;
+  width:36px; height:36px; border-radius:50%;
+  background: var(--bg-primary);
+  border: 2px solid var(--accent-cyan);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:800;
+  color: var(--accent-cyan);
+  box-shadow: 0 0 14px rgba(0,212,255,0.35);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+.timeline-item:hover .timeline-num {
+  transform: scale(1.18);
+  box-shadow: 0 0 22px var(--step-color, rgba(0,212,255,0.55));
+  border-color: var(--step-color, var(--accent-cyan));
+  color: var(--step-color, var(--accent-cyan));
+}
+
+/* ── Step card ── */
+.timeline-content {
+  position: relative; overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 3px solid transparent;
+  border-radius: 16px;
+  padding: 26px 24px 22px;
+  transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: default;
+}
+
+/* Glowing top bar that reveals on hover */
+.timeline-content::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--step-color, var(--accent-cyan)), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px 16px 0 0;
+}
+
+/* Radial light bloom behind content */
+.timeline-content::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 16px;
+  background: radial-gradient(ellipse 80% 60% at 20% 30%, var(--step-glow, rgba(0,212,255,0.07)), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.32s ease;
+  pointer-events: none;
+}
+
+.timeline-content:hover {
+  transform: translateY(-7px) scale(1.012);
+  border-color: var(--step-color, var(--accent-cyan));
+  border-top-color: var(--step-color, var(--accent-cyan));
+  box-shadow:
+    0 20px 50px -10px color-mix(in srgb, var(--step-color, var(--accent-cyan)) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--step-color, var(--accent-cyan)) 18%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  background: color-mix(in srgb, var(--step-color, var(--accent-cyan)) 5%, var(--bg-card));
+}
+.timeline-content:hover::before { opacity: 1; }
+.timeline-content:hover::after  { opacity: 1; }
+
+/* Icon circle */
+.step-icon-wrap {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px;
+  background: color-mix(in srgb, var(--step-color, var(--accent-cyan)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--step-color, var(--accent-cyan)) 30%, transparent);
+  font-size: 26px; margin-bottom: 16px;
+  transition: all 0.32s ease;
+}
+.timeline-content:hover .step-icon-wrap {
+  background: color-mix(in srgb, var(--step-color, var(--accent-cyan)) 22%, transparent);
+  transform: scale(1.1) rotate(-4deg);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--step-color, var(--accent-cyan)) 30%, transparent);
+}
+
+.timeline-title {
+  font-size: 1.15rem; font-weight: 700; margin-bottom: 8px;
+  transition: color 0.25s;
+}
+.timeline-content:hover .timeline-title {
+  color: var(--step-color, var(--accent-cyan));
+}
+.timeline-desc { color: var(--text-secondary); font-size: 14px; line-height: 1.75; margin-bottom: 16px; }
+.detail-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Step color tokens — applied per card */
+.step-1 { --step-color:#00d4ff; --step-glow:rgba(0,212,255,0.09); }
+.step-2 { --step-color:#00ff88; --step-glow:rgba(0,255,136,0.08); }
+.step-3 { --step-color:#f59e0b; --step-glow:rgba(245,158,11,0.08); }
+.step-4 { --step-color:#a855f7; --step-glow:rgba(168,85,247,0.09); }
+.step-5 { --step-color:#ff6b35; --step-glow:rgba(255,107,53,0.09); }
+.step-6 { --step-color:#00ff88; --step-glow:rgba(0,255,136,0.09); }
+
+/* Matching step-num border colors */
+.step-1 .timeline-num { border-color:#00d4ff; color:#00d4ff; }
+.step-2 .timeline-num { border-color:#00ff88; color:#00ff88; box-shadow:0 0 14px rgba(0,255,136,0.35); }
+.step-3 .timeline-num { border-color:#f59e0b; color:#f59e0b; box-shadow:0 0 14px rgba(245,158,11,0.35); }
+.step-4 .timeline-num { border-color:#a855f7; color:#a855f7; box-shadow:0 0 14px rgba(168,85,247,0.35); }
+.step-5 .timeline-num { border-color:#ff6b35; color:#ff6b35; box-shadow:0 0 14px rgba(255,107,53,0.35); }
+.step-6 .timeline-num { border-color:#00ff88; color:#00ff88; box-shadow:0 0 14px rgba(0,255,136,0.35); }
+
+/* ── Flow diagram ── */
+.flow-diagram {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; margin: 60px 0;
+}
+.flow-row { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; row-gap: 12px; }
+.flow-node {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 18px; text-align: center; min-width: 110px;
+  transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  cursor: default;
+}
+.flow-node:hover {
+  transform: translateY(-5px) scale(1.07);
+  border-color: var(--fn-color, var(--accent-cyan));
+  background: color-mix(in srgb, var(--fn-color, var(--accent-cyan)) 8%, var(--bg-secondary));
+  box-shadow: 0 12px 30px -6px color-mix(in srgb, var(--fn-color, var(--accent-cyan)) 35%, transparent);
+}
+.flow-node-icon { font-size: 24px; margin-bottom: 6px; }
+.flow-node-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.3px; transition: color 0.25s; }
+.flow-node:hover .flow-node-label { color: var(--fn-color, var(--accent-cyan)); }
+.flow-arrow { color: var(--accent-cyan); font-size: 20px; padding: 0 8px; opacity: 0.5; }
+
+/* Signal factor rows */
+.signal-row {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.25s ease;
+  cursor: default;
+}
+.signal-row:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(0,212,255,0.05);
+  transform: translateX(4px);
+}
+
+/* ── Tips section ── */
+.tip-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; border-left: 3px solid var(--accent-cyan);
+  transition: all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  cursor: default;
+}
+.tip-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 36px -8px rgba(0,212,255,0.2);
+  border-color: var(--accent-cyan);
+  background: rgba(0,212,255,0.04);
+}
+.tip-card.warning { border-left-color: var(--accent-orange); }
+.tip-card.warning:hover { box-shadow: 0 14px 36px -8px rgba(255,107,53,0.2); border-color: var(--accent-orange); background: rgba(255,107,53,0.04); }
+.tip-card.success { border-left-color: var(--accent-green); }
+.tip-card.success:hover { box-shadow: 0 14px 36px -8px rgba(0,255,136,0.2); border-color: var(--accent-green); background: rgba(0,255,136,0.04); }
+
+/* ── Mobile responsive ── */
+.hiw-grid { display: grid; grid-template-columns: 1fr 340px; gap: 40px; align-items: start; }
+@media (max-width: 1024px) {
+  .hiw-grid { grid-template-columns: 1fr 280px; gap: 28px; }
+}
+@media (max-width: 768px) {
+  .hiw-grid { grid-template-columns: 1fr; gap: 32px; }
+  .timeline { padding-left: 44px; }
+  .timeline-num { left: -50px; width: 32px; height: 32px; font-size: 13px; }
+  .step-icon-wrap { width: 44px; height: 44px; font-size: 22px; }
+  .flow-row { gap: 0; row-gap: 8px; }
+  .flow-node { min-width: 90px; padding: 10px 12px; }
+  .flow-node-icon { font-size: 20px; }
+  .flow-node-label { font-size: 10px; }
+  .flow-arrow { font-size: 14px; padding: 0 4px; }
+  .flow-diagram { padding: 20px 16px; margin: 32px 0; }
+}
+@media (max-width: 480px) {
+  .timeline { padding-left: 36px; }
+  .timeline-num { left: -42px; width: 28px; height: 28px; font-size: 12px; }
+  .timeline-content { padding: 16px 14px 14px; }
+  .flow-row { flex-wrap: wrap; justify-content: center; gap: 6px; }
+  .flow-arrow { display: none; }
+  .flow-node { min-width: 80px; }
+  .signal-row { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link">AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link active">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="hero-tag">Under the Hood</div>
+    <h1>How <span class="text-cyan">OddsOracle</span> Works</h1>
+    <p>A step-by-step look at how we crawl live odds, build AI predictions, and deliver value bets to your screen in real-time.</p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:80px">
+  <!-- Flow diagram -->
+  <div class="flow-diagram reveal">
+    <div class="card-title text-center mb-24">THE ODDSORACLE INTELLIGENCE PIPELINE</div>
+    <div class="flow-row">
+      <div class="flow-node" style="--fn-color:#00d4ff"><div class="flow-node-icon">🕷️</div><div class="flow-node-label">Crawl 14 Books</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node" style="--fn-color:#00ff88"><div class="flow-node-icon">⚖️</div><div class="flow-node-label">Normalize Odds</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node" style="--fn-color:#f59e0b"><div class="flow-node-icon">📡</div><div class="flow-node-label">6 Signals</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node" style="--fn-color:#a855f7"><div class="flow-node-icon">🤖</div><div class="flow-node-label">Claude AI</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node" style="--fn-color:#ff6b35"><div class="flow-node-icon">💎</div><div class="flow-node-label">+EV Detection</div></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-node" style="--fn-color:#00ff88;border-color:rgba(0,255,136,0.4)"><div class="flow-node-icon">🎯</div><div class="flow-node-label">Your Dashboard</div></div>
+    </div>
+  </div>
+
+  <div class="hiw-grid">
+    <!-- Timeline -->
+    <div class="timeline">
+
+      <!-- STEP 1 -->
+      <div class="timeline-item step-1">
+        <div class="timeline-num">1</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">🕷️</div>
+          <div class="timeline-title">Web Crawler Engine</div>
+          <div class="timeline-desc">Our crawler fleet of 14 distributed nodes hits all 14 major sportsbooks simultaneously every 60 seconds. We use a rotating proxy pool to avoid blocks, and smart parsing algorithms to extract odds data from each book's JavaScript-rendered pages.</div>
+          <div class="detail-chips">
+            <span class="badge badge-cyan">14 sportsbooks</span>
+            <span class="badge badge-cyan">60s refresh rate</span>
+            <span class="badge badge-cyan">14 proxy nodes</span>
+            <span class="badge badge-cyan">9,800+ markets/scan</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="timeline-item step-2">
+        <div class="timeline-num">2</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">⚖️</div>
+          <div class="timeline-title">Odds Normalization & Market Mapping</div>
+          <div class="timeline-desc">Raw odds from each book are normalized into a standard decimal format. We apply vig removal algorithms to strip the bookmaker's margin from each outcome, giving us the "fair" implied probability for every market. Events are matched across books using our proprietary event matching engine.</div>
+          <div class="detail-chips">
+            <span class="badge badge-green">Vig removal</span>
+            <span class="badge badge-green">Event matching</span>
+            <span class="badge badge-green">Market normalization</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="timeline-item step-3">
+        <div class="timeline-num">3</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">📡</div>
+          <div class="timeline-title">Signal Collection — 6 Key Factors</div>
+          <div class="timeline-desc">For each event, we collect and score 6 predictive signals that our model weights independently. These signals are calibrated based on historical accuracy data across 50,000+ past events.</div>
+          <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">1.</strong> Recent Form (5 games) <span class="badge badge-orange" style="margin-left:auto;font-size:10px">22%</span></div>
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">2.</strong> Head-to-Head Record <span class="badge badge-orange" style="margin-left:auto;font-size:10px">18%</span></div>
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">3.</strong> Home/Away Advantage <span class="badge badge-orange" style="margin-left:auto;font-size:10px">16%</span></div>
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">4.</strong> Sharp Line Movement <span class="badge badge-orange" style="margin-left:auto;font-size:10px">20%</span></div>
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">5.</strong> Injury Report Impact <span class="badge badge-orange" style="margin-left:auto;font-size:10px">14%</span></div>
+            <div class="signal-row"><strong style="color:#f59e0b;min-width:16px">6.</strong> Public Money Fade <span class="badge badge-orange" style="margin-left:auto;font-size:10px">10%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="timeline-item step-4">
+        <div class="timeline-num">4</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">🤖</div>
+          <div class="timeline-title">Claude AI Analysis</div>
+          <div class="timeline-desc">Each event is passed to Claude (Anthropic's AI model) with a structured prompt containing all 6 signal scores, the normalized odds, historical context, and injury data. Claude generates a sharp analyst narrative and provides a clear BET / MONITOR / PASS recommendation.</div>
+          <div class="detail-chips">
+            <span class="badge badge-purple">Claude AI</span>
+            <span class="badge badge-purple">3-sentence verdict</span>
+            <span class="badge badge-purple">BET / MONITOR / PASS</span>
+            <span class="badge badge-purple">Confidence grade A/B/C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="timeline-item step-5">
+        <div class="timeline-num">5</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">💎</div>
+          <div class="timeline-title">Value Bet Detection (+EV)</div>
+          <div class="timeline-desc">The model compares our calculated true probability against the market's implied probability. If our model gives Team A a 65% win probability but the best available odds imply only 52%, that's a <strong style="color:#ff6b35">+13% edge</strong> — a clear positive expected value (+EV) situation flagged as a VALUE BET.</div>
+          <div class="detail-chips">
+            <span class="badge badge-orange">+EV detection</span>
+            <span class="badge badge-orange">Edge % calculated</span>
+            <span class="badge badge-orange">Best odds highlighted</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="timeline-item step-6">
+        <div class="timeline-num">6</div>
+        <div class="timeline-content reveal">
+          <div class="step-icon-wrap">📲</div>
+          <div class="timeline-title">Delivered to Your Dashboard</div>
+          <div class="timeline-desc">All predictions, odds comparisons, AI verdicts, and value bets appear on your dashboard in real-time. Premium users also get SMS and email alerts for high-confidence value bets. Every prediction is automatically logged in your Tracker for performance analysis.</div>
+          <div class="detail-chips">
+            <span class="badge badge-green">Real-time dashboard</span>
+            <span class="badge badge-green">SMS &amp; email alerts</span>
+            <span class="badge badge-green">Auto-tracked results</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right sidebar: Tips -->
+    <div>
+      <div class="tip-card success mb-16 reveal">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent-green);margin-bottom:8px">✓ PRO TIP: Focus on Grade A</div>
+        <p style="font-size:13px;color:var(--text-secondary)">Grade A picks (confidence ≥83%) have historically outperformed Grade B and C picks by a significant margin. Start by filtering your predictions to Grade A only.</p>
+      </div>
+      <div class="tip-card mb-16 reveal">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent-cyan);margin-bottom:8px">💡 Use Value Bets for ROI</div>
+        <p style="font-size:13px;color:var(--text-secondary)">Simply picking winners isn't enough for long-term profit. Focus on VALUE BETS (orange ◆) where our model finds a genuine edge vs the market odds. These provide positive expected value over time.</p>
+      </div>
+      <div class="tip-card warning mb-16 reveal">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent-orange);margin-bottom:8px">⚠️ Bankroll Management</div>
+        <p style="font-size:13px;color:var(--text-secondary)">Never bet more than 1-5% of your bankroll on a single event, even on Grade A picks. Variance is real. The Kelly Criterion suggests 2-3% for strong +EV bets.</p>
+      </div>
+      <div class="tip-card success mb-16 reveal">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent-green);margin-bottom:8px">📊 Track Everything</div>
+        <p style="font-size:13px;color:var(--text-secondary)">Use the Prediction Tracker to monitor your actual results against predictions. This helps you understand which sport and confidence level performs best for you personally.</p>
+      </div>
+      <div class="card reveal mt-16">
+        <div class="card-title mb-16">ACCURACY BY GRADE</div>
+        <div class="mb-12">
+          <div class="flex-between mb-4"><span style="font-size:13px;font-weight:700;color:var(--accent-green)">Grade A (≥83%)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-green)">85.2%</span></div>
+          <div class="progress-track"><div class="progress-fill progress-green" style="width:85.2%"></div></div>
+        </div>
+        <div class="mb-12">
+          <div class="flex-between mb-4"><span style="font-size:13px;font-weight:700;color:var(--accent-yellow)">Grade B (76-82%)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-yellow)">77.8%</span></div>
+          <div class="progress-track"><div class="progress-fill progress-orange" style="width:77.8%"></div></div>
+        </div>
+        <div>
+          <div class="flex-between mb-4"><span style="font-size:13px;font-weight:700;color:var(--accent-orange)">Grade C (65-75%)</span><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-orange)">68.4%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:68.4%;background:var(--accent-orange)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-banner reveal mt-40" style="text-align:center;background:linear-gradient(135deg,rgba(0,212,255,0.1),rgba(0,255,136,0.07));border:1px solid rgba(0,212,255,0.2);border-radius:20px;padding:48px 32px">
+    <h2 style="font-size:2rem;margin-bottom:12px">Ready to Put the Edge to Work?</h2>
+    <p style="color:var(--text-secondary);margin-bottom:24px">Start your 7-day free trial. No credit card needed.</p>
+    <div class="flex-center gap-16" style="flex-wrap:wrap">
+      <a href="register.html" class="btn btn-primary btn-lg"><i class="fa fa-rocket"></i> Start Free Trial</a>
+      <a href="predictions.html" class="btn btn-ghost btn-lg"><i class="fa fa-eye"></i> View Live Predictions</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

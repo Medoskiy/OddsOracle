@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Top Sportsbooks & Casinos — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.sb-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: var(--transition); display: flex; flex-direction: column; }
+.sb-card:hover { border-color: var(--accent-cyan); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,212,255,0.1); }
+.sb-card-header { padding: 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); }
+.sb-logo { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 900; font-family: 'Rajdhani',sans-serif; flex-shrink: 0; }
+.sb-name { font-size: 16px; font-weight: 700; }
+.sb-card-body { padding: 16px 20px; flex: 1; }
+.sb-rating { display: flex; gap: 3px; margin-bottom: 10px; }
+.star-full { color: var(--accent-yellow); }
+.star-empty { color: var(--border); }
+.sb-bonus { background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,212,255,0.08)); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
+.sb-bonus-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+.sb-bonus-val { font-weight: 700; color: var(--accent-green); font-size: 14px; }
+.pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.pros-list, .cons-list { font-size: 12px; }
+.pros-list h4 { color: var(--accent-green); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.cons-list h4 { color: #ef4444; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.pros-list li, .cons-list li { list-style: none; padding: 3px 0; display: flex; align-items: flex-start; gap: 5px; color: var(--text-secondary); line-height: 1.4; }
+.pros-list li::before { content: '✓'; color: var(--accent-green); font-weight: 700; flex-shrink: 0; font-size: 11px; margin-top: 1px; }
+.cons-list li::before { content: '✗'; color: #ef4444; font-weight: 700; flex-shrink: 0; font-size: 11px; margin-top: 1px; }
+.sb-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sb-tag { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: var(--bg-secondary); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* Country tabs */
+.country-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px; }
+.country-tab { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--border); cursor: pointer; transition: var(--transition); font-size: 13px; font-weight: 600; }
+.country-tab:hover { border-color: var(--border-bright); }
+.country-tab.active { background: var(--accent-cyan-dim); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.country-flag { font-size: 18px; }
+
+/* ── Mobile responsive ── */
+@media(max-width:768px){
+  .sb-card-header { padding: 14px; gap: 10px; }
+  .sb-card-body { padding: 12px 14px; }
+  .sb-footer { padding: 10px 14px; }
+  .sb-logo { width: 40px; height: 40px; font-size: 16px; }
+  .country-tab { padding: 8px 12px; font-size: 12px; }
+  .country-flag { font-size: 16px; }
+  .country-tabs { gap: 6px; margin-bottom: 20px; }
+}
+@media(max-width:480px){
+  .pros-cons { grid-template-columns: 1fr; gap: 8px; }
+  .sb-card-header { padding: 12px; }
+  .sb-name { font-size: 14px; }
+  .sb-bonus { padding: 8px 10px; }
+  .country-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .country-tab { flex-shrink: 0; padding: 7px 10px; }
+}
+</style>
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link"><i class="fa fa-robot" style="font-size:11px"></i> AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link active">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero" style="padding-top:100px;padding-bottom:40px">
+  <div class="container">
+    <div class="hero-tag">Reviewed & Ranked</div>
+    <h1>Top Sportsbooks & <span class="text-cyan">Casinos</span></h1>
+    <p>Independently reviewed by our AI analysis team. Find the best bonuses, odds, and features available in your country.</p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:80px">
+  <!-- Country tabs -->
+  <div class="country-tabs" id="countryTabs">
+    <div class="country-tab active" data-country="nigeria"><span class="country-flag">🇳🇬</span> Nigeria</div>
+    <div class="country-tab" data-country="ghana"><span class="country-flag">🇬🇭</span> Ghana</div>
+    <div class="country-tab" data-country="kenya"><span class="country-flag">🇰🇪</span> Kenya</div>
+    <div class="country-tab" data-country="tanzania"><span class="country-flag">🇹🇿</span> Tanzania</div>
+    <div class="country-tab" data-country="uganda"><span class="country-flag">🇺🇬</span> Uganda</div>
+    <div class="country-tab" data-country="southafrica"><span class="country-flag">🇿🇦</span> South Africa</div>
+    <div class="country-tab" data-country="uk"><span class="country-flag">🇬🇧</span> United Kingdom</div>
+    <div class="country-tab" data-country="us"><span class="country-flag">🇺🇸</span> United States</div>
+  </div>
+
+  <div id="sbGrid" class="grid-3"></div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+const SB_DATA = {
+  nigeria: [
+    { name:'Bet9ja', logo:'B9', color:'#006600', badge:'#1 Nigeria', rating:4.5, bonus:'100% up to ₦100,000', bonusLabel:'Welcome Bonus', pros:['Most popular in Nigeria','Great soccer odds','Jackpot games available','Mobile app excellent'], cons:['Slow withdrawal sometimes','Customer service limited','High wagering on bonus'], tags:['Soccer','Casino','Virtual','Jackpot'], rank:1 },
+    { name:'1xBet Nigeria', logo:'1X', color:'#0074c2', badge:'Best Odds', rating:4.3, bonus:'144% up to ₦130,000', bonusLabel:'First Deposit', pros:['Massive market selection','Live streaming available','Crypto payments accepted','24/7 support'], cons:['Complex interface','High bonus wagering (35x)','KYC can be slow'], tags:['Soccer','NBA','Casino','Crypto'], rank:2 },
+    { name:'SportyBet', logo:'SB', color:'#00a651', badge:'Fast Payouts', rating:4.2, bonus:'₦5,000 Free Bet', bonusLabel:'No Deposit Bonus', pros:['Fast withdrawals (under 30min)','User-friendly interface','Competitive soccer odds','USSD banking support'], cons:['Limited casino games','No live streaming','Fewer markets vs rivals'], tags:['Soccer','Virtual','Live Betting'], rank:3 },
+    { name:'BetKing', logo:'BK', color:'#c01c27', badge:'Best Bonuses', rating:4.0, bonus:'200% up to ₦50,000', bonusLabel:'Welcome Bonus', pros:['Highest bonus percentage','Live betting available','Great mobile experience','Regular promotions'], cons:['Odds slightly lower','Limited payment options','Weekend withdrawal delays'], tags:['Soccer','Basketball','Casino'], rank:4 },
+    { name:'Nairabet', logo:'NB', color:'#006400', badge:'Local Favorite', rating:3.8, bonus:'₦3,000 Free Bet', bonusLabel:'Sign Up Bonus', pros:['First Nigerian bookmaker','Trusted brand since 2009','Naira deposits easy','Good customer service'], cons:['Outdated interface','Fewer live markets','Lower max payouts'], tags:['Soccer','Tennis','Virtual'], rank:5 },
+    { name:'MSport', logo:'MS', color:'#d4af37', badge:'Casino King', rating:3.7, bonus:'100% up to ₦75,000', bonusLabel:'Sports Bonus', pros:['Excellent casino section','Live dealer games','Regular cashback offers','Competitive jackpots'], cons:['Weaker sports selection','Less favorable odds','Geo-restrictions on some games'], tags:['Casino','Slots','Sports','Live'], rank:6 },
+  ],
+  ghana: [
+    { name:'SportyBet Ghana', logo:'SB', color:'#00a651', badge:'#1 Ghana', rating:4.4, bonus:'GH₵100 Free Bet', bonusLabel:'Welcome Bonus', pros:['Most trusted in Ghana','Fast Mobile Money payouts','Great soccer coverage','MTN/Vodafone supported'], cons:['Limited international leagues','No live streaming','Bonus wagering 5x'], tags:['Soccer','Virtual','Live'], rank:1 },
+    { name:'Betway Ghana', logo:'BW', color:'#00008b', badge:'Best Live', rating:4.3, bonus:'100% up to GH₵200', bonusLabel:'Deposit Bonus', pros:['Excellent live betting','Premium soccer odds','Quality mobile app','Responsible gambling tools'], cons:['Withdrawal takes 24-48h','High minimum withdrawal','KYC required for large wins'], tags:['Soccer','Casino','Live','eSports'], rank:2 },
+    { name:'1xBet Ghana', logo:'1X', color:'#0074c2', badge:'Most Markets', rating:4.1, bonus:'144% up to GH₵580', bonusLabel:'First Deposit', pros:['Largest market selection','Virtual sports available','Crypto payments','In-play cash out'], cons:['Complex for beginners','High wagering requirements','Interface cluttered'], tags:['All Sports','Casino','Virtual'], rank:3 },
+    { name:'BetPawa', logo:'BP', color:'#ff6600', badge:'No Min Bet', rating:3.9, bonus:'Bet 1 Get 1 Free', bonusLabel:'First Bet', pros:['No minimum bet amount','Biggest odds in Africa','Simple clean interface','Quick registration'], cons:['Limited payment options','No live streaming','Customer service email only'], tags:['Soccer','Basketball'], rank:4 },
+    { name:'Melbet Ghana', logo:'MB', color:'#e41e26', badge:'High Odds', rating:3.7, bonus:'130% up to GH₵500', bonusLabel:'Welcome Offer', pros:['Very competitive odds','Large casino section','Regular free bets','24/7 live chat'], cons:['Newer brand, less trust','Withdrawal proof required','Mobile app issues'], tags:['Soccer','Casino','Slots'], rank:5 },
+    { name:'WinBet Ghana', logo:'WB', color:'#9900cc', badge:'Local Brand', rating:3.5, bonus:'50% up to GH₵100', bonusLabel:'First Deposit', pros:['Local GH brand','Supports local leagues','Easy GHipss payment','Simple interface'], cons:['Limited market selection','Lower odds than rivals','No casino section'], tags:['Soccer','Virtual'], rank:6 },
+  ],
+  kenya: [
+    { name:'Betika', logo:'BT', color:'#28a745', badge:'#1 Kenya', rating:4.5, bonus:'Jackpot daily from KES 100M', bonusLabel:'Jackpot Bonus', pros:['Largest jackpot in Kenya','MPESA integrated seamlessly','Excellent mobile app','Tons of promotions'], cons:['Odds lower on small leagues','Bonus terms restrictive','Weekend support slow'], tags:['Soccer','Jackpot','Casino'], rank:1 },
+    { name:'SportPesa Kenya', logo:'SP', color:'#006400', badge:'Sports Giant', rating:4.3, bonus:'100% up to KES 5,000', bonusLabel:'Welcome Bonus', pros:['Historic Kenyan brand','Manchester City partner','Best soccer odds KE','Live TV streaming'], cons:['Was suspended briefly in 2019','Some UI issues','No crypto'], tags:['Soccer','NBA','Casino','Live'], rank:2 },
+    { name:'Odibets', logo:'OD', color:'#ff4500', badge:'Best MPESA', rating:4.2, bonus:'Bet KES 200 Get KES 1,000', bonusLabel:'First Bet', pros:['Instant MPESA withdrawals','Very simple interface','Good odds on local leagues','Mobile-first design'], cons:['Limited international sports','No live dealer games','Small casino section'], tags:['Soccer','Virtual','Live'], rank:3 },
+    { name:'Betway Kenya', logo:'BW', color:'#00008b', badge:'Premium', rating:4.0, bonus:'100% up to KES 5,000', bonusLabel:'First Deposit', pros:['Premium brand quality','Live betting excellent','Responsible gambling features','International markets'], cons:['Higher minimum deposit','Slower than local books','Requires full KYC upfront'], tags:['Soccer','Casino','eSports','Live'], rank:4 },
+    { name:'1xBet Kenya', logo:'1X', color:'#0074c2', badge:'Most Sports', rating:3.9, bonus:'144% up to KES 14,400', bonusLabel:'Welcome Bonus', pros:['Biggest sports selection','Crypto deposits allowed','Live streaming for some events','Competitive odds'], cons:['Very complex for new users','High 35x wagering','Withdrawal sometimes slow'], tags:['All Sports','Casino','Virtual','Crypto'], rank:5 },
+    { name:'Mozzartbet KE', logo:'MZ', color:'#cc0000', badge:'Casino King', rating:3.8, bonus:'KES 3,000 Free Bet', bonusLabel:'No Deposit', pros:['Best casino in Kenya','Keno and numbers games','Quick withdrawals','Regular tournaments'], cons:['Sports odds not best','Limited live markets','App crashes occasionally'], tags:['Casino','Keno','Soccer'], rank:6 },
+  ],
+  tanzania: [
+    { name:'Betpawa Tanzania', logo:'BP', color:'#ff6600', badge:'#1 TZ', rating:4.3, bonus:'Bet 200 TZS Win 50x', bonusLabel:'Welcome Offer', pros:['No minimum stake','Highest payout odds in TZ','Simple registration via phone','M-Pesa Vodacom supported'], cons:['Limited customer support','No live casino','Fewer markets available'], tags:['Soccer','Basketball'], rank:1 },
+    { name:'1xBet Tanzania', logo:'1X', color:'#0074c2', badge:'Most Markets', rating:4.1, bonus:'144% up to TZS 2,000,000', bonusLabel:'First Deposit', pros:['Massive market selection','Live events streaming','Many payment methods','Virtual sports'], cons:['Complex interface','High wagering 35x','Some delayed payouts'], tags:['All Sports','Casino','Virtual'], rank:2 },
+    { name:'Betika Tanzania', logo:'BT', color:'#28a745', badge:'Trusted Brand', rating:4.0, bonus:'Jackpot daily TZS 10M+', bonusLabel:'Jackpot Offer', pros:['Trusted East Africa brand','Local telecom integration','Jackpot games popular','Regular promotions'], cons:['Odds slightly lower','Fewer international leagues','Requires national ID'], tags:['Soccer','Jackpot','Virtual'], rank:3 },
+    { name:'Kwikbet TZ', logo:'KB', color:'#9900cc', badge:'Local Pick', rating:3.7, bonus:'100% up to TZS 100,000', bonusLabel:'Deposit Bonus', pros:['Local Tanzanian brand','Supports Halotel, Tigo, Airtel','Simple USSD interface','Good customer service'], cons:['Lower odds','Limited sports','Small casino'], tags:['Soccer','Virtual'], rank:4 },
+    { name:'Parimatch TZ', logo:'PM', color:'#f7c600', badge:'Best UX', rating:3.8, bonus:'125% up to TZS 250,000', bonusLabel:'First Deposit', pros:['Excellent mobile app','Clean modern interface','Live betting available','Good soccer odds'], cons:['Newer to Tanzania market','Fewer local payment options','Small bonus amount'], tags:['Soccer','eSports','Casino'], rank:5 },
+    { name:'Meridianbet TZ', logo:'MR', color:'#0066cc', badge:'Euro Brand', rating:3.6, bonus:'100% up to TZS 150,000', bonusLabel:'Welcome Bonus', pros:['Strong European brand','Good international odds','Live betting covered','Reliable withdrawals'], cons:['Not locally focused','Limited local leagues','Support not 24/7'], tags:['Soccer','Basketball','Casino'], rank:6 },
+  ],
+  uganda: [
+    { name:'Betway Uganda', logo:'BW', color:'#00008b', badge:'#1 Uganda', rating:4.4, bonus:'100% up to UGX 100,000', bonusLabel:'Welcome Bonus', pros:['Best known brand in UG','MTN & Airtel Money','Excellent live betting','Responsible gambling tools'], cons:['Higher minimum withdrawal','Slower KYC process','Bonus terms complex'], tags:['Soccer','Casino','Live','eSports'], rank:1 },
+    { name:'1xBet Uganda', logo:'1X', color:'#0074c2', badge:'Best Odds', rating:4.1, bonus:'144% up to UGX 3,400,000', bonusLabel:'First Deposit', pros:['Largest market selection','High payout percentages','Live streaming available','Many sports covered'], cons:['Complex for beginners','High wagering 35x','Interface overwhelming'], tags:['All Sports','Casino','Virtual'], rank:2 },
+    { name:'Betika Uganda', logo:'BT', color:'#28a745', badge:'East Africa', rating:3.9, bonus:'Jackpot daily UGX 50M+', bonusLabel:'Jackpot Offer', pros:['East African trusted brand','Mobile-first platform','Jackpot games loved','Regular cashback'], cons:['Not as big as Uganda rivals','Fewer payment options','Some odds lower'], tags:['Soccer','Jackpot'], rank:3 },
+  ],
+  southafrica: [
+    { name:'Hollywoodbets', logo:'HB', color:'#8b0000', badge:'#1 SA', rating:4.5, bonus:'R25 Free Bet No Deposit', bonusLabel:'No Deposit Bonus', pros:['South Africa\'s biggest book','Excellent horse racing coverage','1000+ betting markets','Long established (1999)'], cons:['Interface looks dated','Live chat sometimes slow','Horse racing focus over soccer'], tags:['Racing','Soccer','Casino','Virtual'], rank:1 },
+    { name:'Betway South Africa', logo:'BW', color:'#00008b', badge:'Best Sports', rating:4.3, bonus:'100% up to R1,000', bonusLabel:'Welcome Bonus', pros:['Best online sportsbook SA','Excellent live betting','Quality mobile app','EFT & credit card supported'], cons:['FICA documentation needed','Withdrawal 1-3 days','No crypto payments'], tags:['Soccer','Casino','Live','eSports'], rank:2 },
+    { name:'Supabets SA', logo:'SB', color:'#cc0000', badge:'Fast Payouts', rating:4.0, bonus:'100% up to R500', bonusLabel:'First Deposit', pros:['Fast EFT withdrawals','SA-born brand','Good soccer odds','Regular free bets'], cons:['Smaller market selection','No live streaming','Less competitive odds internationally'], tags:['Soccer','Virtual','Racing'], rank:3 },
+    { name:'10bet South Africa', logo:'10', color:'#003399', badge:'High Odds', rating:3.9, bonus:'100% up to R1,500', bonusLabel:'Welcome Offer', pros:['Great odds across sports','Clean modern interface','Live betting available','NBA & NFL covered'], cons:['Newer to SA market','Fewer local promotions','Limited payment methods'], tags:['Soccer','NBA','NFL','Casino'], rank:4 },
+  ],
+  uk: [
+    { name:'bet365', logo:'b3', color:'#005c2e', badge:'World #1', rating:4.8, bonus:'Up to £30 Free Bets', bonusLabel:'New Customer', pros:['Largest book worldwide','Live streaming 90,000+ events','Incredible market depth','Industry-leading cash out'], cons:['Limits winners aggressively','High wagering on casino','Complex T&Cs'], tags:['Soccer','Casino','Live','Horse Racing'], rank:1 },
+    { name:'William Hill', logo:'WH', color:'#004a97', badge:'UK Heritage', rating:4.5, bonus:'£30 in Free Bets', bonusLabel:'Welcome Offer', pros:['Iconic UK brand since 1934','Excellent horse racing','Great in-play market','High street & online'], cons:['App less polished than rivals','Odds not always best','Complex bonus terms'], tags:['Soccer','Racing','Casino','Poker'], rank:2 },
+    { name:'Betfair Exchange', logo:'BF', color:'#f6c618', badge:'Exchange', rating:4.7, bonus:'£30 Free Bet Exchange', bonusLabel:'New Customer', pros:['Best odds via exchange','Back AND lay outcomes','Low commission model','Unbeatable on big events'], cons:['Complex for beginners','Requires counterpart liquidity','Commission on winnings'], tags:['Exchange','Soccer','Racing','Tennis'], rank:3 },
+    { name:'Paddy Power', logo:'PP', color:'#006633', badge:'Best Promotions', rating:4.3, bonus:'£20 Money Back as Cash', bonusLabel:'First Bet', pros:['Famous for promotions','Money back specials','Fun brand personality','Great live betting'], cons:['Odds not always sharpest','Can limit winning accounts','Complex promo rules'], tags:['Soccer','Racing','Casino','Golf'], rank:4 },
+  ],
+  us: [
+    { name:'DraftKings', logo:'DK', color:'#1a8a00', badge:'#1 USA', rating:4.7, bonus:'$200 Bonus Bets', bonusLabel:'First Bet $5', pros:['Best US sportsbook overall','Excellent live betting interface','Daily fantasy integration','Huge market selection'], cons:['Not in all US states','Odds can be steep juice','Casino only in select states'], tags:['NFL','NBA','MLB','Casino'], rank:1 },
+    { name:'FanDuel', logo:'FD', color:'#1493ff', badge:'Best UX', rating:4.6, bonus:'$200 in Bonus Bets', bonusLabel:'First $5 Bet', pros:['Cleanest interface in US','Fast payouts','Excellent parlay builder','Same game parlays'], cons:['Odds not always best','Limited banking in some states','Promos less generous than DK'], tags:['NFL','NBA','NHL','Casino'], rank:2 },
+    { name:'BetMGM', logo:'BM', color:'#c19a29', badge:'Best Casino', rating:4.4, bonus:'Up to $1,500 Back in Bonus Bets', bonusLabel:'First Bet Insurance', pros:['Largest casino bonus in US','MGM Rewards integration','Great live betting','One login for casino+sports'], cons:['App has occasional bugs','Promos can be confusing','Lower table game limits'], tags:['NFL','NBA','Casino','Poker'], rank:3 },
+    { name:'Caesars Sportsbook', logo:'CS', color:'#b8860b', badge:'Best Loyalty', rating:4.3, bonus:'First Bet up to $1,000 Back', bonusLabel:'Caesars Rewards', pros:['Caesars rewards integration','Hotel/entertainment perks','Excellent NFL coverage','Top customer service'], cons:['Not in all states','App less modern than DK','Promos paid as bonus bets'], tags:['NFL','NBA','NHL','MLB'], rank:4 },
+  ],
+};
+
+function renderStars(rating) {
+  let html = '';
+  for (let i=1; i<=5; i++) {
+    if (i <= Math.floor(rating)) html += '<i class="fa fa-star star-full"></i>';
+    else if (i - 0.5 <= rating) html += '<i class="fa fa-star-half-alt star-full"></i>';
+    else html += '<i class="fa fa-star star-empty"></i>';
+  }
+  html += `<span style="font-size:12px;color:var(--text-secondary);margin-left:6px">${rating}/5</span>`;
+  return html;
+}
+
+function renderSBCards(country) {
+  const grid = document.getElementById('sbGrid');
+  grid.innerHTML = '';
+  const books = SB_DATA[country] || [];
+  books.forEach(sb => {
+    const rankLabel = sb.rank === 1 ? '🥇 #1 Ranked' : sb.rank === 2 ? '🥈 #2 Ranked' : sb.rank === 3 ? '🥉 #3 Ranked' : '';
+    const div = document.createElement('div');
+    div.className = 'sb-card reveal';
+    div.innerHTML = `
+      <div class="sb-card-header">
+        <div class="sb-logo" style="background:${sb.color};color:#fff">${sb.logo}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="sb-name">${sb.name}</div>
+            <span class="badge badge-cyan" style="font-size:10px">${sb.badge}</span>
+          </div>
+          <div class="sb-rating mt-8">${renderStars(sb.rating)}</div>
+        </div>
+        ${rankLabel ? `<span style="font-size:14px">${rankLabel.split(' ')[0]}</span>` : ''}
+      </div>
+      <div class="sb-card-body">
+        <div class="sb-bonus">
+          <div class="sb-bonus-label">${sb.bonusLabel}</div>
+          <div class="sb-bonus-val">🎁 ${sb.bonus}</div>
+        </div>
+        <div class="pros-cons">
+          <div class="pros-list">
+            <h4>✓ Pros</h4>
+            <ul>${sb.pros.map(p=>`<li>${p}</li>`).join('')}</ul>
+          </div>
+          <div class="cons-list">
+            <h4>✗ Cons</h4>
+            <ul>${sb.cons.map(c=>`<li>${c}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>
+      <div class="sb-footer">
+        ${sb.tags.map(t=>`<span class="sb-tag">${t}</span>`).join('')}
+        <a href="register.html" class="btn btn-primary btn-sm" style="margin-left:auto">Visit Site</a>
+      </div>`;
+    grid.appendChild(div);
+  });
+  // re-init reveal
+  document.querySelectorAll('.reveal').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    setTimeout(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; }, 100);
+  });
+}
+
+// Country tab switching
+document.querySelectorAll('.country-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.country-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    renderSBCards(this.dataset.country);
+  });
+});
+
+renderSBCards('nigeria');
+</script>
+</body>
+</html>

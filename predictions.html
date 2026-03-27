@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Predictions — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.main-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; margin-top: 90px; padding: 24px 0 60px; }
+@media(max-width:1024px){ .main-layout { grid-template-columns:1fr; } .sidebar { display:none; } }
+.sidebar { position: sticky; top: 84px; height: fit-content; }
+
+/* Crawler progress */
+.crawler-log { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; max-height: 220px; overflow-y: auto; }
+.log-line { padding: 3px 0; border-bottom: 1px solid rgba(30,45,61,0.4); }
+.log-line:last-child { border-bottom: none; }
+.log-ts { color: var(--text-muted); }
+.log-ok { color: var(--accent-green); }
+.log-scan { color: var(--accent-cyan); }
+.log-warn { color: var(--accent-yellow); }
+
+/* Event card */
+.event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: var(--transition); position: relative; }
+.event-card:hover { border-color: var(--border-bright); transform: translateX(3px); }
+.event-card.selected { border-color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
+.event-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
+.event-teams { font-size: 15px; font-weight: 700; }
+.event-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* Odds table inline */
+.odds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0; }
+.odds-grid.two-col { grid-template-columns: repeat(2, 1fr); }
+.odds-cell { text-align: center; padding: 8px 4px; border-radius: 7px; background: var(--bg-secondary); border: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; transition: var(--transition); }
+.odds-cell.best-odds { border-color: var(--accent-green); background: var(--accent-green-dim); color: var(--accent-green); }
+.odds-cell .odds-label { font-size: 9px; color: var(--text-muted); margin-bottom: 2px; font-family: 'Inter', sans-serif; }
+.odds-cell .odds-val { font-size: 13px; font-weight: 700; }
+
+/* Prediction box on card */
+.pred-box { background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,255,136,0.05)); border: 1px solid rgba(0,212,255,0.2); border-radius: 10px; padding: 14px; margin-top: 12px; }
+.pred-outcome { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 6px; }
+.pred-meta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* Grade badge */
+.grade-a { color: var(--accent-green); font-weight: 900; font-size: 22px; font-family: 'Rajdhani', sans-serif; }
+.grade-b { color: var(--accent-yellow); font-weight: 900; font-size: 22px; font-family: 'Rajdhani', sans-serif; }
+.grade-c { color: var(--accent-orange); font-weight: 900; font-size: 22px; font-family: 'Rajdhani', sans-serif; }
+
+/* Sidebar detail */
+.sidebar-detail { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.detail-outcome-hero { background: linear-gradient(135deg, rgba(0,212,255,0.12), rgba(0,255,136,0.08)); border: 1px solid rgba(0,212,255,0.25); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px; }
+.detail-outcome-hero .outcome-label { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent-cyan); }
+.win-prob-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.win-prob-label { width: 110px; font-size: 12px; color: var(--text-secondary); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.signal-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(30,45,61,0.4); }
+.signal-row:last-child { border-bottom: none; }
+.signal-name { font-size: 13px; }
+.signal-strong { color: var(--accent-green); font-size: 12px; font-weight: 700; }
+.signal-neutral { color: var(--accent-yellow); font-size: 12px; font-weight: 700; }
+.signal-weak { color: var(--accent-orange); font-size: 12px; font-weight: 700; }
+
+/* Book odds grid */
+.books-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.book-row { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--bg-secondary); border-radius: 7px; border: 1px solid var(--border); font-size: 12px; }
+.book-row.top-book { border-color: var(--accent-green); background: var(--accent-green-dim); }
+
+/* Claude verdict */
+.claude-box { background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25); border-radius: 10px; padding: 16px; margin-top: 14px; }
+.claude-verdict { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 12px; }
+.claude-reco { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+.reco-bet { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(0,255,136,0.3); }
+.reco-monitor { background: rgba(251,191,36,0.12); color: var(--accent-yellow); border: 1px solid rgba(251,191,36,0.3); }
+.reco-pass { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+
+/* Crash game section */
+.crash-section { background: var(--bg-card); border: 1px solid rgba(255,107,53,0.2); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+.crash-display { font-family: 'JetBrains Mono', monospace; font-size: 48px; font-weight: 700; text-align: center; padding: 20px; border-radius: 10px; background: var(--bg-secondary); margin: 16px 0; transition: all 0.3s ease; }
+.crash-rising { color: var(--accent-green); text-shadow: 0 0 30px rgba(0,255,136,0.5); }
+.crash-busted { color: #ef4444; text-shadow: 0 0 30px rgba(239,68,68,0.5); }
+
+/* ── Mobile responsive for predictions ── */
+@media (max-width: 768px) {
+  .main-layout { grid-template-columns: 1fr !important; margin-top: 72px; padding: 16px 0 48px; }
+  .sidebar { display: none !important; }
+  .stats-bar { border-radius: 10px; overflow: hidden; }
+  .event-card { padding: 14px; }
+  .event-teams { font-size: 13px; }
+  .pred-outcome { font-size: 15px; }
+  .odds-grid { grid-template-columns: repeat(3,1fr); gap: 4px; }
+  .crash-display { font-size: 36px; padding: 14px; }
+  .filter-bar { gap: 8px; }
+  #sportTabs { gap: 4px; }
+}
+@media (max-width: 480px) {
+  .main-layout { padding: 12px 0 40px; }
+  .event-card { padding: 12px; margin-bottom: 12px; }
+  .pred-box { padding: 10px; }
+  .pred-outcome { font-size: 14px; }
+  .crash-display { font-size: 28px; }
+  .odds-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .event-header { flex-direction: column; gap: 8px; }
+  .books-grid { grid-template-columns: 1fr !important; }
+  .stats-bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .stat-item { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+  .stat-item:nth-child(odd) { border-right: 1px solid var(--border) !important; }
+  .stat-item:nth-last-child(1),
+  .stat-item:nth-last-child(2) { border-bottom: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link active"><i class="fa fa-robot" style="font-size:11px"></i> AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <span class="live-badge"><span class="live-dot"></span> CRAWLERS LIVE</span>
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="main-layout">
+
+    <!-- LEFT: Main Content -->
+    <div>
+      <!-- Stats bar -->
+      <div class="stats-bar mb-24">
+        <div class="stat-item"><div class="stat-val" id="statEvents">—</div><div class="stat-lbl">Total Events</div></div>
+        <div class="stat-item"><div class="stat-val text-orange" id="statValue">—</div><div class="stat-lbl">Value Bets</div></div>
+        <div class="stat-item"><div class="stat-val text-cyan" id="statBooks">19</div><div class="stat-lbl">Books Scanned</div></div>
+        <div class="stat-item"><div class="stat-val text-green" id="statConf">—</div><div class="stat-lbl">Avg Confidence</div></div>
+      </div>
+
+      <!-- Crawler progress -->
+      <div class="card mb-24">
+        <div class="card-header">
+          <span class="card-title"><i class="fa fa-spider" style="color:var(--accent-cyan)"></i> Live Crawler Engine — 19 Books</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="crawlerScanProgress" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)"></span>
+            <span class="live-badge"><span class="live-dot"></span> SCANNING</span>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px">
+            <span id="crawlerProgressLabel">Initializing...</span>
+            <span id="crawlerProgressPct">0%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill progress-cyan" id="crawlerProgressBar" style="width:0%;transition:width 0.5s ease"></div></div>
+        </div>
+        <div class="crawler-log" id="crawlerLog">
+          <div class="log-line"><span class="log-ts">[00:00:00]</span> <span class="log-scan">Initializing OddsOracle crawler v4.2 — 19 sportsbooks queued...</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:14px" id="crawlerStatus">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Crash Game Panel -->
+      <div class="crash-section">
+        <div class="flex-between mb-12">
+          <div>
+            <span class="card-title" style="color:var(--accent-orange)"><i class="fa fa-rocket"></i> Crash Game AI Predictor</span>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:4px">Live signals from Bc.game, Stake & Bet9ja Aviator — powered by pattern AI</p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="crashBtn"><i class="fa fa-play"></i> Run Simulation</button>
+        </div>
+
+        <!-- Book selector tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="crashBookTabs">
+          <button class="btn btn-sm" style="background:rgba(155,89,182,0.2);border:1px solid rgba(155,89,182,0.4);color:#c39bd3;font-size:11px" onclick="selectCrashBook('Bc.game',this)">💎 Bc.game</button>
+          <button class="btn btn-sm" style="background:rgba(0,231,1,0.15);border:1px solid rgba(0,231,1,0.35);color:#00e701;font-size:11px" onclick="selectCrashBook('Stake',this)">🚀 Stake</button>
+          <button class="btn btn-sm" style="background:rgba(0,102,0,0.2);border:1px solid rgba(0,102,0,0.4);color:#4caf50;font-size:11px" onclick="selectCrashBook('Bet9ja',this)">🇳🇬 Bet9ja</button>
+          <button class="btn btn-sm" style="background:var(--accent-cyan-dim);border:1px solid var(--accent-cyan);color:var(--accent-cyan);font-size:11px" onclick="selectCrashBook('Betwinner',this)">🏆 Betwinner</button>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;color:var(--text-muted)">Active source:</span>
+          <span id="crashBookActive" style="font-size:11px;font-weight:700;color:var(--accent-orange)">Bc.game — Aviator</span>
+          <span class="live-badge" style="margin-left:auto"><span class="live-dot"></span> LIVE DATA</span>
+        </div>
+
+        <div class="crash-display crash-rising" id="crashDisplay">1.00x</div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">AI TARGET</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--accent-cyan)" id="crashTarget">2.4x</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">SAFE EXIT</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--accent-green)" id="crashSafe">1.8x</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">BUST RISK</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--accent-orange)" id="crashRisk">34%</div>
+          </div>
+          <div style="text-align:center;padding:10px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">AVG 10</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--accent-yellow)" id="crashAvg">3.2x</div>
+          </div>
+        </div>
+
+        <!-- Trend mini chart -->
+        <div style="margin-top:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:10px">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase">Recent multiplier history</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap" id="crashHistory"></div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" style="flex-wrap:wrap;gap:10px">
+        <div class="tabs" id="sportTabs" style="overflow-x:auto;flex-wrap:nowrap;display:flex;gap:6px;padding-bottom:2px;min-width:0;flex:1">
+          <button class="tab-btn active" data-sport="all" style="white-space:nowrap">All Sports</button>
+          <button class="tab-btn" data-sport="Soccer" style="white-space:nowrap">⚽ Soccer</button>
+          <button class="tab-btn" data-sport="NBA" style="white-space:nowrap">🏀 NBA</button>
+          <button class="tab-btn" data-sport="NFL" style="white-space:nowrap">🏈 NFL</button>
+          <button class="tab-btn" data-sport="Tennis" style="white-space:nowrap">🎾 Tennis</button>
+          <button class="tab-btn" data-sport="Boxing" style="white-space:nowrap">🥊 Boxing</button>
+          <button class="tab-btn" data-sport="Darts" style="white-space:nowrap">🎯 Darts</button>
+          <button class="tab-btn" data-sport="Baseball" style="white-space:nowrap">⚾ Baseball</button>
+          <button class="tab-btn" data-sport="Badminton" style="white-space:nowrap">🏸 Badminton</button>
+          <button class="tab-btn" data-sport="Cricket" style="white-space:nowrap">🏏 Cricket</button>
+          <button class="tab-btn" data-sport="Formula 1" style="white-space:nowrap">🏎️ Formula 1</button>
+          <button class="tab-btn" data-sport="Volleyball" style="white-space:nowrap">🏐 Volleyball</button>
+          <button class="tab-btn" data-sport="Water Polo" style="white-space:nowrap">🤽 Water Polo</button>
+          <button class="tab-btn" data-sport="Golf" style="white-space:nowrap">⛳ Golf</button>
+          <button class="tab-btn" data-sport="Cycling" style="white-space:nowrap">🚴 Cycling</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:var(--text-secondary)">
+            <input type="checkbox" id="valueOnly" style="accent-color:var(--accent-orange)"> Value bets only
+          </label>
+          <button class="btn btn-ghost btn-sm" id="refreshBtn"><i class="fa fa-sync"></i> Rescan</button>
+        </div>
+      </div>
+
+      <!-- Events list -->
+      <div id="eventsList"></div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-detail" id="sidebarDetail">
+        <div style="text-align:center;padding:40px 20px;color:var(--text-muted)">
+          <i class="fa fa-mouse-pointer" style="font-size:32px;margin-bottom:12px;opacity:0.4"></i>
+          <p style="font-size:13px">Click any event card to see the full AI breakdown</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+const BOOKS = [
+  'DraftKings','FanDuel','BetMGM','Caesars','bet365','PointsBet','Unibet','W.Hill',
+  'Bet9ja','Betwinner','Bc.game','Stake','Betano','1xBet',
+  '22bet','Betking','Msport','Afropari','Helabet'
+];
+
+// Brand metadata — colors, URLs, specialties
+const BOOK_META = {
+  'DraftKings': { color:'#1a8a00', icon:'🦅', region:'USA',          specialty:'NFL/NBA',          url:'draftkings.com' },
+  'FanDuel':    { color:'#1493ff', icon:'🎯', region:'USA',          specialty:'Live Betting',     url:'fanduel.com' },
+  'BetMGM':     { color:'#c19a29', icon:'🦁', region:'USA',          specialty:'Casino+Sports',    url:'betmgm.com' },
+  'Caesars':    { color:'#b8860b', icon:'👑', region:'USA',          specialty:'NFL Props',        url:'caesars.com' },
+  'bet365':     { color:'#005c2e', icon:'⚽', region:'Global',       specialty:'Soccer/Live',      url:'bet365.com' },
+  'PointsBet':  { color:'#e31837', icon:'📍', region:'USA/AUS',      specialty:'PointsBetting',    url:'pointsbet.com' },
+  'Unibet':     { color:'#007c41', icon:'🎰', region:'Europe',       specialty:'Soccer/Casino',    url:'unibet.com' },
+  'W.Hill':     { color:'#004a97', icon:'🏇', region:'UK',           specialty:'Horse Racing',     url:'williamhill.com' },
+  'Bet9ja':     { color:'#006600', icon:'🇳🇬', region:'Nigeria',     specialty:'Soccer/Virtual',   url:'bet9ja.com' },
+  'Betwinner':  { color:'#ff6600', icon:'🏆', region:'Africa/Global',specialty:'High Odds',        url:'betwinner.ng' },
+  'Bc.game':    { color:'#9b59b6', icon:'💎', region:'Crypto/Global',specialty:'Crash/Casino',     url:'bc.game' },
+  'Stake':      { color:'#00e701', icon:'🚀', region:'Crypto/Global',specialty:'Aviator/Crash',    url:'stake.com' },
+  'Betano':     { color:'#d4001c', icon:'🔥', region:'Africa/Europe',specialty:'Soccer/eSports',   url:'betano.ng' },
+  '1xBet':      { color:'#0074c2', icon:'1️⃣', region:'Africa/Global',specialty:'Most Markets',     url:'1xbet.ng' },
+  '22bet':      { color:'#f05a22', icon:'🎰', region:'Africa/Global',specialty:'Casino+Sports',    url:'22bet.ng' },
+  'Betking':    { color:'#1a9e2f', icon:'🏅', region:'Nigeria/Africa',specialty:'Soccer/Jackpot',  url:'betking.com' },
+  'Msport':     { color:'#0a3d8f', icon:'🏟️', region:'Nigeria',      specialty:'Soccer/Virtuals',  url:'msport.com' },
+  'Afropari':   { color:'#e63946', icon:'🌍', region:'Africa',       specialty:'Soccer/Live',      url:'afropari.com' },
+  'Helabet':    { color:'#00b4d8', icon:'⚡', region:'Africa/EU',    specialty:'Sports/Casino',    url:'helabet.com' },
+};
+const EVENTS_DATA = [
+  // Soccer
+  { id:1,  sport:'Soccer',    league:'Premier League 🏆',       home:'Manchester City',    away:'Arsenal',             time:'Today 15:00'    },
+  { id:2,  sport:'Soccer',    league:'La Liga ⚽',               home:'Real Madrid',        away:'Barcelona',           time:'Today 20:45'    },
+  { id:3,  sport:'Soccer',    league:'UEFA Champions League ⭐', home:'Bayern Munich',      away:'PSG',                 time:'Tomorrow 20:00' },
+  { id:4,  sport:'Soccer',    league:'Serie A 🇮🇹',              home:'Inter Milan',        away:'Juventus',            time:'Tomorrow 19:45' },
+  // Basketball
+  { id:5,  sport:'NBA',       league:'NBA Regular Season 🏀',   home:'Los Angeles Lakers', away:'Boston Celtics',      time:'Today 19:30'    },
+  { id:6,  sport:'NBA',       league:'NBA Regular Season 🏀',   home:'Golden State Warriors',away:'Miami Heat',        time:'Today 21:00'    },
+  // American Football
+  { id:7,  sport:'NFL',       league:'NFL Week 18 🏈',           home:'Kansas City Chiefs', away:'Buffalo Bills',       time:'Tomorrow 18:00' },
+  // Tennis
+  { id:8,  sport:'Tennis',    league:'ATP Masters 1000 🎾',     home:'Novak Djokovic',     away:'Carlos Alcaraz',      time:'Today 14:00'    },
+  { id:9,  sport:'Tennis',    league:'WTA Finals 🎾',            home:'Iga Swiatek',        away:'Aryna Sabalenka',     time:'Tomorrow 13:00' },
+  // Boxing
+  { id:10, sport:'Boxing',    league:'WBC Heavyweight 🥊',      home:'Tyson Fury',         away:'Anthony Joshua',      time:'Sat 22:00'      },
+  { id:11, sport:'Boxing',    league:'IBF Welterweight 🥊',     home:'Errol Spence Jr.',   away:'Terence Crawford',    time:'Sat 20:00'      },
+  // Darts
+  { id:12, sport:'Darts',     league:'PDC World Championship 🎯',home:'Luke Littler',      away:'Michael van Gerwen',  time:'Today 19:00'    },
+  // Baseball
+  { id:13, sport:'Baseball',  league:'MLB Regular Season ⚾',    home:'NY Yankees',         away:'LA Dodgers',          time:'Today 19:05'    },
+  { id:14, sport:'Baseball',  league:'MLB Regular Season ⚾',    home:'Houston Astros',     away:'Chicago Cubs',        time:'Today 20:10'    },
+  // Badminton
+  { id:15, sport:'Badminton', league:'BWF World Tour Finals 🏸', home:'Viktor Axelsen',     away:'Shi Yuqi',            time:'Tomorrow 10:00' },
+  // Cricket
+  { id:16, sport:'Cricket',   league:'ICC T20 World Cup 🏏',    home:'India',              away:'Australia',           time:'Tomorrow 14:00' },
+  { id:17, sport:'Cricket',   league:'IPL 2025 🏏',             home:'Mumbai Indians',     away:'Chennai Super Kings', time:'Today 15:30'    },
+  // Formula 1
+  { id:18, sport:'Formula 1', league:'F1 Monaco Grand Prix 🏎️', home:'Max Verstappen',     away:'Lewis Hamilton',      time:'Sun 15:00'      },
+  { id:19, sport:'Formula 1', league:'F1 British Grand Prix 🏎️',home:'Lando Norris',       away:'Charles Leclerc',     time:'Sun 14:00'      },
+  // Volleyball
+  { id:20, sport:'Volleyball',league:'FIVB Nations League 🏐',  home:'Brazil',             away:'Poland',              time:'Tomorrow 18:00' },
+  // Water Polo
+  { id:21, sport:'Water Polo',league:'LEN Champions League 🤽', home:'Pro Recco',          away:'Barceloneta',         time:'Tomorrow 20:00' },
+  // Golf
+  { id:22, sport:'Golf',      league:'The Masters H2H ⛳',      home:'Scottie Scheffler',  away:'Rory McIlroy',        time:'Sun 16:00'      },
+  // Cycling
+  { id:23, sport:'Cycling',   league:'Tour de France H2H 🚴',   home:'Tadej Pogacar',      away:'Jonas Vingegaard',    time:'Sat 14:00'      },
+];
+
+const VERDICTS = {
+  Soccer: [
+    "The home side enters this fixture on the back of four consecutive wins with dominant possession metrics and a high press. Sharp money has moved the line 0.12 points in their favor over the last 6 hours — a strong institutional signal. The away team's key striker is listed as doubtful, significantly reducing their attacking threat.",
+    "Recent form strongly favors the home side, who have won six of their last eight home games by multiple goals. Head-to-head data over five encounters shows a clear dominance pattern. Line movement since opening has been steady toward the home team, suggesting smart-money alignment.",
+  ],
+  NBA: [
+    "The home team has covered the spread in 7 of their last 10 home games and enters with a top-5 offensive rating. Injury reports show the visiting squad missing their starting point guard. Public money is split 54/46 but sharp bettors are heavily backing the home side.",
+    "Advanced metrics favor the home team's defense, ranked top-3 in defensive rating over the last 15 games. The visitor's pace-of-play will be disrupted on the road, and rest advantage sits firmly with the home squad.",
+  ],
+  NFL: [
+    "Home field advantage in the playoffs is historically worth 3+ points, and this matchup is no exception. The home team's offensive line grades out significantly better, giving their QB time to exploit zone coverages. Steam moves detected at 3 major books signal sharp professional action.",
+    "Weather conditions favor the ground game, suiting the home team's rushing attack. The visiting team's secondary has allowed over 280 yards passing in their last four games — a significant vulnerability against this offense.",
+  ],
+  Tennis: [
+    "Surface statistics heavily favor the higher seed, who has won 73% of matches on this surface in the last 12 months. H2H record stands 4-2 in the higher-ranked player's favor. Recent form shows the underdog coming off a five-set battle 48 hours ago — fatigue is a real factor.",
+    "The favorite enters fresh, having received a walkover in the previous round. Their serve percentage on this surface ranks top-3 on tour. The underdog has struggled with second-serve returns against heavy topspin.",
+  ],
+  Boxing: [
+    "The champion holds a clear edge in reach, work rate, and ring IQ, with 4 consecutive wins by stoppage or unanimous decision. Sharp money has moved significantly toward the favourite since the opening line — a signal of professional action. The challenger is stepping up in class and has shown vulnerabilities against a sustained jab.",
+    "Power metrics heavily favour one fighter — 74% knockout rate in the last 8 bouts is well above the divisional average. Head-to-head body-punch stats indicate a likely stoppage scenario. The underdog's corner has been making public adjustments, but line movement has not responded — fade the public here.",
+  ],
+  Darts: [
+    "The world-ranked player holds a dominant H2H record on this format, winning 7 of the last 10 meetings. Their average leg duration is significantly lower, indicating clinical finishing under pressure. Sharp action has pushed the line 0.08 points in their favour since the morning line.",
+    "Recent tournament form is starkly one-sided, with the favourite averaging 101+ checkout per leg across the last 5 events. The underdog has struggled on the outer doubles recently, which will prove costly at this level. Fade the public money — sharps are clearly on the favourite.",
+  ],
+  Baseball: [
+    "The starting pitching matchup strongly favours the home side — their ace enters with a 1.94 ERA over the last 6 starts and has dominated this lineup historically. Bullpen depth also tilts home, with the visitor's pen ranking 27th in inherited runner strand rate. Line movement confirms sharp action.",
+    "Advanced Statcast data shows a significant exit velocity advantage for the home team's lineup vs this pitcher's fastball command. Run differential over the last 14 games is +22 for the home side. The visitor's closer is flagged as day-to-day, weakening late-inning protection.",
+  ],
+  Badminton: [
+    "The top-ranked player holds a 6-2 H2H edge on indoor hard courts, with wins coming via superior net control and deceptive drop-shot placement. Recent form shows 3 consecutive finals appearances. The opponent has shown fatigue signs after a grueling semi-final less than 18 hours ago.",
+    "Footwork efficiency data from this tournament shows the favourite covering 12% fewer meters per point — evidence of clean, efficient shot selection. The underdog's backhand cross has been 18% less accurate than their season average. Expect a straight-game victory for the higher seed.",
+  ],
+  Cricket: [
+    "Pitch and weather reports indicate a flat batting surface with minimal lateral movement, strongly favouring the chasing side. The favourite's top-order batting average in T20 is 42% higher than the opposition, and their death bowling has conceded under 9 runs/over in the last 5 matches. Sharp books opened them -145 and the line has only strengthened.",
+    "The toss has historically determined 68% of T20 outcomes on this venue. Power-play data shows the favourite averages 51 runs in the first 6 overs against pace attacks like this one. The opposition's key spinner has a 12.4 economy against left-right batting combinations — a critical advantage here.",
+  ],
+  'Formula 1': [
+    "Qualifying pace data shows the favourite 0.312 seconds faster in the final sector — historically the most predictive metric for race outcome at this circuit. Tyre degradation models from practice sessions favour their car setup for medium compounds. DRS efficiency is 7% higher for the favourite through the main straight.",
+    "The head-to-head record across the last 3 appearances at this venue stands 3-0 in the favourite's favour. Mechanical reliability metrics for the challenger's power unit have raised flags in team communications. Expect the model's edge to hold — this line hasn't moved, suggesting limited sharp disagreement.",
+  ],
+  Volleyball: [
+    "The home team's block-assist ratio is the highest in this competition, neutralising the opponent's dominant outside hitter who averages 28 points per set. Service ace differential is +11 in the home side's favour over the last 6 matches. Sharp money opened strongly on the home team and hasn't wavered.",
+    "Set-win percentage at home sits at 78% for the favourite, with a particularly dominant record in the 4th and 5th sets — a signal of superior conditioning and mental resilience. The visitor's libero is carrying an undisclosed shoulder issue, which could disrupt their defensive rotation significantly.",
+  ],
+  'Water Polo': [
+    "The higher-ranked team holds a dominant 8-2 H2H record in Champions League play, with superior counterattack efficiency averaging 4.2 goals per game from transition. Their goalkeeper's save percentage at 58% is 14 points above the pool average. Line movement has been consistent toward the favourite.",
+    "Power-play conversion rate is the decisive factor here — the favourite converts 41% of man-up situations versus 27% for the opposition. Their centre-forward has scored in 9 consecutive matches and faces a backline ranked 8th defensively in this competition. This is a strong model BET.",
+  ],
+  Golf: [
+    "Strokes-gained data for this course strongly favours the higher-ranked player — their tee-to-green efficiency on parkland layouts ranks top-5 on tour this season. H2H record in final-round pairings stands 4-1 in the favourite's favour. Sharp sportsbooks have installed them as clear favourites and the line hasn't moved despite public betting.",
+    "Wind and weather conditions tomorrow suit the favourite's high-trajectory ball flight which outperforms on links-style turf. The underdog's putting stroke has been below their 3-year average on bent grass, while the favourite ranks 2nd in strokes-gained putting on this surface. Fade the public money here.",
+  ],
+  Cycling: [
+    "Power-to-weight ratio modelling places the favourite as the strongest climber in this field by a margin of 4.2 watts/kg — a decisive advantage on today's mountain stage. Stage profiling shows 3,800m of vertical gain, which suits a pure climber over a time-trial specialist. The challenger has shown fatigue in recovery from previous mountain stages.",
+    "This head-to-head matchup historically falls to the rider with greater Grand Tour experience, and the favourite holds a 5-1 edge in multi-week stage races. Their support team has been tactically superior, controlling breakaways and managing tempo. Current form, conditioning data, and betting market alignment all point the same direction.",
+  ],
+};
+
+const RECO = ['BET', 'MONITOR', 'PASS'];
+
+let allPredictions = [];
+let selectedEventId = null;
+let activeSport = 'all';
+
+// Base odds per sport — 3-outcome sports get [home, draw, away]
+const SPORT_BASE = {
+  'Soccer':    () => [1.9+Math.random()*0.5, 3.0+Math.random()*0.8, 3.5+Math.random()*1.2],
+  'Boxing':    () => [1.8+Math.random()*0.6, 2.1+Math.random()*0.7, 14.0+Math.random()*4.0],
+  'NBA':       () => [1.7+Math.random()*0.4, 2.0+Math.random()*0.5],
+  'NFL':       () => [1.8+Math.random()*0.3, 1.9+Math.random()*0.3],
+  'Tennis':    () => [1.5+Math.random()*0.5, 2.2+Math.random()*0.8],
+  'Darts':     () => [1.6+Math.random()*0.4, 2.0+Math.random()*0.5],
+  'Baseball':  () => [1.8+Math.random()*0.3, 1.9+Math.random()*0.3],
+  'Badminton': () => [1.5+Math.random()*0.5, 2.1+Math.random()*0.6],
+  'Cricket':   () => [1.7+Math.random()*0.4, 2.0+Math.random()*0.5],
+  'Formula 1': () => [1.6+Math.random()*0.5, 2.2+Math.random()*0.7],
+  'Volleyball':() => [1.6+Math.random()*0.4, 2.1+Math.random()*0.5],
+  'Water Polo':() => [1.7+Math.random()*0.4, 2.0+Math.random()*0.5],
+  'Golf':      () => [1.5+Math.random()*0.6, 2.2+Math.random()*0.8],
+  'Cycling':   () => [1.6+Math.random()*0.5, 2.1+Math.random()*0.6],
+};
+const THREE_WAY = new Set(['Soccer','Boxing']);
+
+function buildOdds(sport) {
+  const baseFn = SPORT_BASE[sport] || (() => [1.7+Math.random()*0.4, 2.0+Math.random()*0.5]);
+  const base = baseFn();
+  const booksOdds = BOOKS.map(() => base.map(o => +(o * (0.96 + Math.random()*0.08)).toFixed(2)));
+  return booksOdds;
+}
+
+function getBestOdds(booksOdds) {
+  const len = booksOdds[0].length;
+  const best = [];
+  for (let i=0; i<len; i++) {
+    best.push(Math.max(...booksOdds.map(b => b[i])));
+  }
+  return best;
+}
+
+function buildPrediction(ev) {
+  const is3way = THREE_WAY.has(ev.sport);
+  const outcomes = is3way ? [ev.home+' WIN','DRAW',ev.away+' WIN'] : [ev.home+' WIN',ev.away+' WIN'];
+  const booksOdds = buildOdds(ev.sport);
+  const bestOdds = getBestOdds(booksOdds);
+  const probs = bestOdds.map(o => +(1/o).toFixed(3));
+  const totalProb = probs.reduce((a,b)=>a+b,0);
+  const adjProbs = probs.map(p => +(p/totalProb).toFixed(3));
+  const predIdx = adjProbs.indexOf(Math.max(...adjProbs));
+  const modelProb = Math.round(adjProbs[predIdx]*100 + Math.random()*12 - 2);
+  const conf = Math.min(88, Math.max(65, modelProb + Math.floor(Math.random()*10)));
+  const grade = conf >= 83 ? 'A' : conf >= 76 ? 'B' : 'C';
+  const edge = +((modelProb/100 - adjProbs[predIdx])*100 + Math.random()*4).toFixed(1);
+  const isValue = edge > 3.5;
+  const signals = ['Recent Form','H2H Record','Home Advantage','Sharp Movement','Injury Report','Public Money Fade'];
+  const signalData = signals.map(s => {
+    const r = Math.random();
+    return { name: s, rating: r>0.6?'Strong':r>0.3?'Neutral':'Weak' };
+  });
+  const verdicts = VERDICTS[ev.sport] || VERDICTS.Soccer;
+  const verdict = verdicts[Math.floor(Math.random()*verdicts.length)];
+  const recoIdx = isValue && conf >= 78 ? 0 : conf >= 72 ? 1 : 2;
+  return { ...ev, outcomes, booksOdds, bestOdds, adjProbs, predIdx, predicted: outcomes[predIdx], conf, grade, edge, isValue, signalData, verdict, reco: RECO[recoIdx], modelProb };
+}
+
+function renderEvents(filter = 'all', valueOnly = false) {
+  const list = document.getElementById('eventsList');
+  list.innerHTML = '';
+  const filtered = allPredictions.filter(p => (filter==='all' || p.sport===filter) && (!valueOnly || p.isValue));
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-search" style="font-size:32px;opacity:0.3;margin-bottom:12px"></i><p>No events match the current filter</p></div>';
+    return;
+  }
+  let valueBets = allPredictions.filter(p=>p.isValue).length;
+  let avgConf = Math.round(allPredictions.reduce((a,b)=>a+b.conf,0)/allPredictions.length);
+  document.getElementById('statEvents').textContent = allPredictions.length;
+  document.getElementById('statValue').textContent = valueBets;
+  document.getElementById('statConf').textContent = avgConf + '%';
+
+  filtered.forEach(p => {
+    const isSoccer = p.sport === 'Soccer';
+    const confColor = p.conf >= 80 ? 'var(--accent-green)' : p.conf >= 72 ? 'var(--accent-yellow)' : 'var(--accent-orange)';
+    const gradeClass = p.grade === 'A' ? 'grade-a' : p.grade === 'B' ? 'grade-b' : 'grade-c';
+    const div = document.createElement('div');
+    div.className = 'event-card' + (p.id === selectedEventId ? ' selected' : '');
+    div.dataset.id = p.id;
+
+    // Build odds grid (show best book odds)
+    const labels = isSoccer ? ['Home','Draw','Away'] : ['Home','Away'];
+    let oddsGridHtml = `<div class="odds-grid${isSoccer?'':' two-col'}">`;
+    labels.forEach((lbl, i) => {
+      oddsGridHtml += `<div class="odds-cell${p.bestOdds[i] === Math.max(...p.bestOdds) && i === p.predIdx ? ' best-odds' : ''}">
+        <div class="odds-label">${lbl}</div>
+        <div class="odds-val">${p.bestOdds[i]}</div>
+      </div>`;
+    });
+    oddsGridHtml += '</div>';
+
+    div.innerHTML = `
+      <div class="event-header">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${p.league}</div>
+          <div class="event-teams">${p.home} <span style="color:var(--text-muted);font-weight:400">vs</span> ${p.away}</div>
+        </div>
+        <div class="flex gap-8 flex-column" style="flex-direction:column;align-items:flex-end;gap:6px">
+          ${p.isValue ? '<span class="badge badge-orange">💎 VALUE</span>' : ''}
+          <span class="${gradeClass}">Grade ${p.grade}</span>
+        </div>
+      </div>
+      <div class="event-meta">
+        <span class="badge badge-cyan">${p.sport}</span>
+        <span style="font-size:12px;color:var(--text-muted)"><i class="fa fa-clock"></i> ${p.time}</span>
+        <span style="font-size:12px;color:var(--text-muted)"><i class="fa fa-chart-bar"></i> Edge +${p.edge}%</span>
+      </div>
+      ${oddsGridHtml}
+      <div class="pred-box">
+        <div class="flex-between">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">AI Prediction</div>
+            <div class="pred-outcome">${p.predicted}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Confidence</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:${confColor}">${p.conf}%</div>
+          </div>
+        </div>
+        <div class="conf-bar mt-8"><div class="conf-fill ${p.conf>=80?'conf-high':p.conf>=72?'conf-mid':'conf-low'}" style="width:${p.conf}%"></div></div>
+      </div>`;
+
+    div.addEventListener('click', () => selectEvent(p.id));
+    list.appendChild(div);
+  });
+}
+
+function selectEvent(id) {
+  selectedEventId = id;
+  document.querySelectorAll('.event-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (card) { card.classList.add('selected'); }
+  const p = allPredictions.find(x => x.id === id);
+  if (!p) return;
+  renderSidebar(p);
+}
+
+function renderSidebar(p) {
+  const sidebar = document.getElementById('sidebarDetail');
+  const confColor = p.conf >= 80 ? 'var(--accent-green)' : p.conf >= 72 ? 'var(--accent-yellow)' : 'var(--accent-orange)';
+  const recoClass = p.reco === 'BET' ? 'reco-bet' : p.reco === 'MONITOR' ? 'reco-monitor' : 'reco-pass';
+  const recoIcon = p.reco === 'BET' ? '✓' : p.reco === 'MONITOR' ? '◉' : '✗';
+  const isSoccer = p.sport === 'Soccer';
+  const labels = isSoccer ? ['Home Win','Draw','Away Win'] : ['Home Win','Away Win'];
+
+  // win prob bars
+  let probBars = '';
+  labels.forEach((lbl, i) => {
+    const pct = Math.round(p.adjProbs[i] * 100);
+    probBars += `<div class="win-prob-row">
+      <span class="win-prob-label">${lbl}</span>
+      <div style="flex:1"><div class="progress-track"><div class="progress-fill ${i===p.predIdx?'progress-green':'progress-cyan'}" style="width:${pct}%"></div></div></div>
+      <span style="font-size:12px;font-family:'JetBrains Mono',monospace;width:36px;text-align:right">${pct}%</span>
+    </div>`;
+  });
+
+  // signals
+  let signalHtml = '';
+  p.signalData.forEach(s => {
+    const cls = s.rating==='Strong'?'signal-strong':s.rating==='Neutral'?'signal-neutral':'signal-weak';
+    const icon = s.rating==='Strong'?'▲':s.rating==='Neutral'?'●':'▼';
+    signalHtml += `<div class="signal-row"><span class="signal-name">${s.name}</span><span class="${cls}">${icon} ${s.rating}</span></div>`;
+  });
+
+  // books odds — sort by best odds for predicted outcome
+  const booksWithOdds = p.booksOdds.map((b, i) => ({
+    name: BOOKS[i], odds: b[p.predIdx], meta: BOOK_META[BOOKS[i]] || { color:'#00d4ff', icon:'🎲', region:'Global' }
+  })).sort((a, b) => b.odds - a.odds);
+  let booksHtml = '';
+  booksWithOdds.forEach((b, rank) => {
+    const isTop = rank === 0;
+    const isSecond = rank === 1;
+    const rankLabel = isTop ? '🥇' : isSecond ? '🥈' : '';
+    booksHtml += `<div class="book-row${isTop?' top-book':''}" style="${isTop?'border-color:var(--accent-green);background:rgba(0,255,136,0.08)':isSecond?'border-color:rgba(0,212,255,0.2)':''}">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:12px">${b.meta.icon}</span>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:${isTop?'var(--accent-green)':'var(--text-primary)'}">${rankLabel} ${b.name}</div>
+          <div style="font-size:9px;color:var(--text-muted)">${b.meta.region}</div>
+        </div>
+      </div>
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:${isTop?'var(--accent-green)':isSecond?'var(--accent-cyan)':'var(--text-primary)'}">${b.odds}</span>
+    </div>`;
+  });
+
+  sidebar.innerHTML = `
+    <div class="detail-outcome-hero">
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">${p.home} vs ${p.away}</div>
+      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">AI PREDICTED WINNER</div>
+      <div class="outcome-label">${p.predicted}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:700;color:${confColor};margin:8px 0">${p.conf}%</div>
+      <div class="conf-bar"><div class="conf-fill ${p.conf>=80?'conf-high':p.conf>=72?'conf-mid':'conf-low'}" style="width:${p.conf}%"></div></div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:12px">
+        <span style="color:var(--text-muted)">Model Prob: <strong style="color:${confColor}">${p.modelProb}%</strong></span>
+        <span style="color:var(--text-muted)">Edge: <strong style="color:var(--accent-orange)">+${p.edge}%</strong></span>
+      </div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:12px">WIN PROBABILITIES</div>
+    ${probBars}
+
+    <div class="glow-line"></div>
+
+    <div class="card-title" style="margin-bottom:12px">SIGNAL ANALYSIS</div>
+    ${signalHtml}
+
+    <div class="glow-line"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span class="card-title">BEST ODDS — 14 BOOKS</span>
+      <span style="font-size:11px;color:var(--accent-green)">Ranked best → worst</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto">${booksHtml}</div>
+
+    <div class="claude-box">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="color:#a78bfa;font-size:16px">🤖</span>
+        <span style="font-size:12px;font-weight:700;color:#a78bfa;letter-spacing:1px">CLAUDE AI VERDICT</span>
+      </div>
+      <div class="claude-verdict">${p.verdict}</div>
+      <span class="claude-reco ${recoClass}">${recoIcon} ${p.reco}</span>
+    </div>
+  `;
+}
+
+// Crawler simulation — 14 sportsbooks
+const LOG_MESSAGES = [
+  // idx 0-3: boot
+  ['log-scan', 'OddsOracle Crawler v4.2 booting — 19 books in queue'],
+  ['log-scan', 'Connecting to distributed proxy pool... 22 nodes active'],
+  ['log-scan', 'Rotating user-agent strings... fingerprint evasion ON'],
+  ['log-scan', '── BATCH 1: International Books ──────────────────────'],
+  // idx 4-11: BATCH 1 (8 books)
+  ['log-ok',   'DraftKings ✓ — 847 markets | 1,204 props | latency 1.2s'],
+  ['log-ok',   'FanDuel ✓ — 912 markets | 988 props | latency 1.4s'],
+  ['log-ok',   'BetMGM ✓ — 763 markets | 841 props | latency 1.8s'],
+  ['log-ok',   'Caesars ✓ — 689 markets | 712 props | latency 2.1s'],
+  ['log-ok',   'bet365 ✓ — 1,204 markets | 2,100+ in-play | latency 0.9s'],
+  ['log-ok',   'PointsBet ✓ — 534 markets | PointsBetting active | latency 2.3s'],
+  ['log-ok',   'Unibet ✓ — 678 markets | casino overlay | latency 1.7s'],
+  ['log-ok',   'William Hill ✓ — 891 markets | 340 racing | latency 1.5s'],
+  // idx 12-25: BATCH 2 (6 books)
+  ['log-scan', '── BATCH 2: African & Crypto Books ───────────────────'],
+  ['log-scan', 'Bet9ja → Connecting to bet9ja.com (NG proxy)...'],
+  ['log-ok',   'Bet9ja ✓ — 1,089 markets | Virtual + Jackpot | latency 1.1s'],
+  ['log-scan', 'Betwinner → Connecting to betwinner.ng (NG/GH proxy)...'],
+  ['log-ok',   'Betwinner ✓ — 1,432 markets | e-Sports included | latency 1.6s'],
+  ['log-scan', 'Bc.game → Connecting to bc.game (Crypto/TOR proxy)...'],
+  ['log-ok',   'Bc.game ✓ — 623 markets | Crash + Plinko | latency 2.4s'],
+  ['log-scan', 'Stake → Connecting to stake.com (Crypto/CDN proxy)...'],
+  ['log-ok',   'Stake ✓ — 741 markets | Aviator signals active | latency 1.9s'],
+  ['log-scan', 'Betano → Connecting to betano.ng (NG/GH proxy)...'],
+  ['log-ok',   'Betano ✓ — 892 markets | Live TV streaming | latency 1.3s'],
+  ['log-scan', '1xBet → Connecting to 1xbet.ng (Multi-region proxy)...'],
+  ['log-ok',   '1xBet ✓ — 2,104 markets | Largest selection | latency 2.0s'],
+  // idx 26-37: BATCH 3 (5 new Nigerian/African books)
+  ['log-scan', '── BATCH 3: Nigerian & African Books ─────────────────'],
+  ['log-scan', '22bet → Connecting to 22bet.ng (NG/Multi-region proxy)...'],
+  ['log-ok',   '22bet ✓ — 1,156 markets | Casino integrated | latency 1.4s'],
+  ['log-scan', 'Betking → Connecting to betking.com (NG proxy)...'],
+  ['log-ok',   'Betking ✓ — 934 markets | Jackpot + Super9ja | latency 1.2s'],
+  ['log-scan', 'Msport → Connecting to msport.com (NG proxy)...'],
+  ['log-ok',   'Msport ✓ — 788 markets | Virtuals + Live | latency 1.6s'],
+  ['log-scan', 'Afropari → Connecting to afropari.com (Africa proxy)...'],
+  ['log-ok',   'Afropari ✓ — 612 markets | Pan-African odds | latency 2.1s'],
+  ['log-scan', 'Helabet → Connecting to helabet.com (Africa/EU proxy)...'],
+  ['log-ok',   'Helabet ✓ — 843 markets | High odds specialty | latency 1.8s'],
+  // idx 38-45: aggregation + AI
+  ['log-scan', '──────────────────────────────────────────────────────'],
+  ['log-scan', 'All 19 books online. Aggregating 15,413 markets...'],
+  ['log-scan', 'Running vig-removal algorithm across all markets...'],
+  ['log-scan', 'Computing implied probabilities — 54 events matched...'],
+  ['log-scan', 'Running Claude AI signal analysis (6 factors per event)...'],
+  ['log-warn', '⚡ Steam alert: Man City -0.15 line move (DraftKings → bet365 → Betking)'],
+  ['log-warn', '⚡ Sharp money: Bayern Munich +220 → +185 across 8 books'],
+  ['log-warn', '⚡ 22bet/Msport spread: Afropari offering +9% edge on Lakers ML'],
+  ['log-warn', '⚡ Helabet offering boosted odds on Real Madrid — 4.2% above market avg'],
+  ['log-ok',   '💎 7 VALUE BETS identified with +EV > 4% edge'],
+  ['log-ok',   '✓ Scan complete — 19/19 books active | Next refresh in 55s'],
+];
+
+// Indices of per-book ✓ OK lines (used to drive the progress bar)
+// BATCH1: 4-11 (8 books) | BATCH2: 14,16,18,20,22,24 (6 books) | BATCH3: 27,29,31,33,35 (5 books)
+const BOOK_LOG_INDICES = [4,5,6,7,8,9,10,11,14,16,18,20,22,24,27,29,31,33,35];
+
+let logIndex = 0;
+function addLogLine() {
+  if (logIndex >= LOG_MESSAGES.length) return;
+  const [cls, msg] = LOG_MESSAGES[logIndex];
+
+  const log = document.getElementById('crawlerLog');
+  const ts = new Date().toLocaleTimeString('en-US', { hour12:false });
+  log.innerHTML += `<div class="log-line"><span class="log-ts">[${ts}]</span> <span class="${cls}">${msg}</span></div>`;
+  log.scrollTop = log.scrollHeight;
+
+  // Update progress bar
+  const booksScanned = BOOK_LOG_INDICES.filter(i => i <= logIndex).length;
+  const pct = Math.round((logIndex / (LOG_MESSAGES.length - 1)) * 100);
+  const progBar = document.getElementById('crawlerProgressBar');
+  const progPct = document.getElementById('crawlerProgressPct');
+  const progLabel = document.getElementById('crawlerProgressLabel');
+  const progScan = document.getElementById('crawlerScanProgress');
+  if (progBar) progBar.style.width = pct + '%';
+  if (progPct) progPct.textContent = pct + '%';
+  if (progLabel) progLabel.textContent = booksScanned > 0 ? `${booksScanned}/14 books scanned` : 'Initializing crawlers...';
+  if (progScan) progScan.textContent = booksScanned > 0 ? `${booksScanned}/14` : '';
+
+  // Color the progress bar based on phase
+  if (progBar) {
+    if (pct < 40) progBar.className = 'progress-fill progress-cyan';
+    else if (pct < 80) progBar.className = 'progress-fill progress-green';
+    else progBar.className = 'progress-fill progress-green';
+  }
+
+  logIndex++;
+  if (logIndex < LOG_MESSAGES.length) {
+    setTimeout(addLogLine, 420 + Math.random()*340);
+  } else {
+    if (progLabel) progLabel.textContent = '14/14 books online — scan complete';
+    setTimeout(initEvents, 400);
+  }
+}
+
+function initEvents() {
+  allPredictions = EVENTS_DATA.map(buildPrediction);
+  renderEvents(activeSport, document.getElementById('valueOnly').checked);
+  renderCrawlerStatus();
+}
+
+function renderCrawlerStatus() {
+  const el = document.getElementById('crawlerStatus');
+  el.innerHTML = BOOKS.map(b => {
+    const meta = BOOK_META[b] || { color:'#00d4ff', icon:'🎲', region:'Global', specialty:'Sports' };
+    const latency = 800 + Math.floor(Math.random() * 1600);
+    const isWarn = latency > 2000;
+    const statusColor = isWarn ? 'var(--accent-orange)' : 'var(--accent-green)';
+    const statusText = isWarn ? 'HIGH LAT' : 'LIVE';
+    return `
+    <div style="background:var(--bg-card2);border:1px solid ${isWarn?'rgba(255,107,53,0.35)':'var(--border)'};border-radius:8px;padding:8px 10px;transition:var(--transition)"
+         onmouseover="this.style.borderColor='${meta.color}';this.style.boxShadow='0 0 10px ${meta.color}33'"
+         onmouseout="this.style.borderColor='${isWarn?'rgba(255,107,53,0.35)':'var(--border)'}';this.style.boxShadow='none'">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px">${meta.icon}</span>
+        <span style="font-size:9px;font-weight:700;color:${statusColor};letter-spacing:0.5px">● ${statusText}</span>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:2px">${b}</div>
+      <div style="font-size:9px;color:var(--text-muted)">${meta.region}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:${isWarn?'var(--accent-orange)':'var(--accent-green)'};margin-top:3px">${latency}ms</div>
+    </div>`;
+  }).join('');
+}
+
+// Sport filter tabs
+document.querySelectorAll('[data-sport]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-sport]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeSport = btn.dataset.sport;
+    renderEvents(activeSport, document.getElementById('valueOnly').checked);
+  });
+});
+
+document.getElementById('valueOnly').addEventListener('change', e => {
+  renderEvents(activeSport, e.target.checked);
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  logIndex = 0;
+  document.getElementById('crawlerLog').innerHTML = '<div class="log-line"><span class="log-ts">[00:00:00]</span> <span class="log-scan">Re-initializing crawler...</span></div>';
+  allPredictions = [];
+  document.getElementById('eventsList').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-spinner fa-spin" style="font-size:24px;margin-bottom:12px"></i><p>Scanning sportsbooks...</p></div>';
+  setTimeout(addLogLine, 300);
+});
+
+// ── Crash Game Engine ──────────────────────────────────────────
+// Book-specific behavior profiles
+const CRASH_BOOK_PROFILES = {
+  'Bc.game':    { name:'Bc.game — Aviator', avgMult: 3.8, bustBias: 0.62, speedFactor: 1.0, color:'#9b59b6' },
+  'Stake':      { name:'Stake — Aviator', avgMult: 4.2, bustBias: 0.58, speedFactor: 1.1, color:'#00e701' },
+  'Bet9ja':     { name:'Bet9ja — Jet X', avgMult: 2.9, bustBias: 0.67, speedFactor: 0.9, color:'#006600' },
+  'Betwinner':  { name:'Betwinner — Aviator', avgMult: 3.5, bustBias: 0.60, speedFactor: 1.05, color:'#ff6600' },
+};
+
+let activeCrashBook = 'Bc.game';
+let crashRunning = false;
+let crashVal = 1.00;
+let crashInterval = null;
+const crashHistories = { 'Bc.game': [], 'Stake': [], 'Bet9ja': [], 'Betwinner': [] };
+
+function selectCrashBook(book, btn) {
+  activeCrashBook = book;
+  const profile = CRASH_BOOK_PROFILES[book];
+  document.getElementById('crashBookActive').textContent = profile.name;
+  document.getElementById('crashBookActive').style.color = profile.color;
+  // Reset display
+  const display = document.getElementById('crashDisplay');
+  display.className = 'crash-display crash-rising';
+  display.textContent = '1.00x';
+  renderCrashHistory();
+  updateCrashStats();
+}
+
+function updateCrashStats() {
+  const hist = crashHistories[activeCrashBook];
+  const recent = hist.slice(-10);
+  if (recent.length > 0) {
+    const avg = (recent.reduce((a,b)=>a+b.val,0)/recent.length).toFixed(2);
+    document.getElementById('crashAvg').textContent = avg + 'x';
+  }
+}
+
+function crashMultiplierForBook(book) {
+  const p = CRASH_BOOK_PROFILES[book] || CRASH_BOOK_PROFILES['Bc.game'];
+  const r = Math.random();
+  // Bust bias adjusts how often early crashes happen
+  if (r < p.bustBias * 0.08) return +(1 + Math.random() * 0.4).toFixed(2);
+  if (r < p.bustBias * 0.6)  return +(1.5 + Math.random() * 1.5).toFixed(2);
+  if (r < p.bustBias * 0.85) return +(3 + Math.random() * 3).toFixed(2);
+  if (r < 0.92)               return +(6 + Math.random() * 8).toFixed(2);
+  return +(15 + Math.random() * p.avgMult * 8).toFixed(2);
+}
+
+function runCrash() {
+  if (crashRunning) return;
+  crashRunning = true;
+  const profile = CRASH_BOOK_PROFILES[activeCrashBook];
+  const bustAt = parseFloat(crashMultiplierForBook(activeCrashBook));
+  const safeTarget = +(bustAt * (0.6 + Math.random()*0.2)).toFixed(2);
+  const aiTarget = +(bustAt * (0.80 + Math.random()*0.12)).toFixed(2);
+  const risk = Math.round(profile.bustBias * 80 + Math.random() * 15);
+
+  document.getElementById('crashTarget').textContent = aiTarget + 'x';
+  document.getElementById('crashSafe').textContent = safeTarget + 'x';
+  document.getElementById('crashRisk').textContent = risk + '%';
+
+  crashVal = 1.00;
+  const display = document.getElementById('crashDisplay');
+  display.className = 'crash-display crash-rising';
+  display.style.color = '';
+
+  const speed = 0.024 * profile.speedFactor;
+  crashInterval = setInterval(() => {
+    crashVal = +(crashVal * (1 + speed + Math.random()*0.028)).toFixed(2);
+    display.textContent = crashVal + 'x';
+
+    // Color transitions as multiplier rises
+    if (crashVal >= aiTarget) display.style.color = 'var(--accent-orange)';
+    else if (crashVal >= safeTarget) display.style.color = 'var(--accent-yellow)';
+
+    if (crashVal >= bustAt) {
+      clearInterval(crashInterval);
+      display.className = 'crash-display crash-busted';
+      display.textContent = 'BUST @ ' + bustAt + 'x';
+      display.style.color = '';
+      crashHistories[activeCrashBook].push({ val: bustAt, bust: true });
+      crashRunning = false;
+      renderCrashHistory();
+      updateCrashStats();
+    }
+  }, 100 / profile.speedFactor);
+}
+
+function renderCrashHistory() {
+  const el = document.getElementById('crashHistory');
+  const hist = crashHistories[activeCrashBook];
+  if (!hist.length) { el.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">No data yet — run a simulation</span>'; return; }
+  el.innerHTML = hist.slice(-20).map(h => {
+    const isHigh = h.val >= 5;
+    const isMid  = h.val >= 2;
+    const bg  = isHigh ? 'rgba(0,255,136,0.15)' : isMid ? 'rgba(251,191,36,0.12)' : 'rgba(239,68,68,0.12)';
+    const col = isHigh ? 'var(--accent-green)' : isMid ? 'var(--accent-yellow)' : '#ef4444';
+    const brd = isHigh ? 'rgba(0,255,136,0.3)' : isMid ? 'rgba(251,191,36,0.3)' : 'rgba(239,68,68,0.3)';
+    return `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 8px;border-radius:5px;background:${bg};color:${col};border:1px solid ${brd}">${h.val}x</span>`;
+  }).join('');
+}
+
+document.getElementById('crashBtn').addEventListener('click', runCrash);
+
+// Seed crash histories for all books
+Object.keys(crashHistories).forEach(book => {
+  for (let i=0; i<12; i++) {
+    crashHistories[book].push({ val: +crashMultiplierForBook(book), bust: true });
+  }
+});
+renderCrashHistory();
+updateCrashStats();
+
+// Start
+setTimeout(addLogLine, 500);
+</script>
+</body>
+</html>

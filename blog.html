@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Blog — OddsOracle Intelligence</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.blog-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; transition: var(--transition); display: flex; flex-direction: column; }
+.blog-card:hover { border-color: var(--border-bright); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.blog-thumb { height: 180px; display: flex; align-items: center; justify-content: center; font-size: 64px; position: relative; overflow: hidden; }
+.blog-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+.blog-cat { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.blog-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; line-height: 1.4; cursor: pointer; }
+.blog-title:hover { color: var(--accent-cyan); }
+.blog-excerpt { font-size: 13px; color: var(--text-secondary); line-height: 1.7; flex: 1; margin-bottom: 16px; }
+.blog-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
+.blog-author { display: flex; align-items: center; gap: 6px; }
+.author-av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+
+/* Featured post */
+.blog-featured { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 32px; display: grid; grid-template-columns: 1fr 1fr; transition: var(--transition); }
+@media(max-width:768px){ .blog-featured { grid-template-columns:1fr; } }
+.blog-featured:hover { border-color: var(--accent-cyan); }
+.blog-featured-thumb { min-height: 300px; display: flex; align-items: center; justify-content: center; font-size: 100px; }
+.blog-featured-body { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+.blog-featured-body h2 { font-size: 1.6rem; margin-bottom: 12px; }
+
+/* Newsletter */
+.newsletter-box { background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(0,255,136,0.05)); border: 1px solid rgba(0,212,255,0.2); border-radius: 16px; padding: 40px; text-align: center; }
+
+/* ── Mobile responsive ── */
+@media(max-width:768px){
+  .blog-featured { grid-template-columns: 1fr; }
+  .blog-featured-thumb { min-height: 180px; font-size: 72px; }
+  .blog-featured-body { padding: 20px; }
+  .blog-featured-body h2 { font-size: 1.3rem; }
+  .blog-thumb { height: 140px; font-size: 48px; }
+  .newsletter-box { padding: 24px 16px; }
+}
+@media(max-width:480px){
+  .blog-body { padding: 14px; }
+  .blog-title { font-size: 14px; }
+  .blog-excerpt { font-size: 12px; }
+  .blog-thumb { height: 120px; font-size: 40px; }
+  .blog-featured-body { padding: 16px; }
+  .newsletter-box { padding: 20px 12px; border-radius: 12px; }
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link">AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link active">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero" style="padding-bottom:40px">
+  <div class="container">
+    <div class="hero-tag">Insights & Strategy</div>
+    <h1>The OddsOracle <span class="text-cyan">Blog</span></h1>
+    <p>AI-powered sports betting insights, strategy guides, and sportsbook reviews from our expert team.</p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:80px">
+  <!-- Category filter -->
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px">
+    <button class="btn btn-primary btn-sm" id="filterAll">All Posts</button>
+    <button class="btn btn-ghost btn-sm">⚽ Soccer</button>
+    <button class="btn btn-ghost btn-sm">🏀 NBA</button>
+    <button class="btn btn-ghost btn-sm">🤖 AI Strategy</button>
+    <button class="btn btn-ghost btn-sm">💎 Value Betting</button>
+    <button class="btn btn-ghost btn-sm">💥 Crash Games</button>
+    <button class="btn btn-ghost btn-sm">🏦 Sportsbooks</button>
+  </div>
+
+  <!-- Featured post -->
+  <div class="blog-featured reveal" style="cursor:pointer" onclick="window.location.href='#'">
+    <div class="blog-featured-thumb" style="background:linear-gradient(135deg,#0d1421,#1a2535)">🤖</div>
+    <div class="blog-featured-body">
+      <div class="flex gap-8 mb-12"><span class="badge badge-cyan">AI STRATEGY</span><span class="badge badge-orange">FEATURED</span></div>
+      <h2>How Claude AI Achieves 78%+ Accuracy on Sports Predictions — A Deep Dive</h2>
+      <p style="color:var(--text-secondary);font-size:14px;line-height:1.7;margin-bottom:20px">We break down the 6-factor signal system behind OddsOracle's AI model, explaining how each signal is weighted and why our calibration approach pushes accuracy into the 75-88% range for Grade A picks.</p>
+      <div class="blog-meta">
+        <div class="blog-author"><div class="author-av" style="background:var(--accent-cyan-dim);color:var(--accent-cyan)">OO</div> OddsOracle Team</div>
+        <span>March 24, 2026</span>
+        <span><i class="fa fa-clock"></i> 8 min read</span>
+        <span><i class="fa fa-eye"></i> 12.4K views</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Blog grid -->
+  <div class="grid-3 reveal" id="blogGrid"></div>
+
+  <!-- Newsletter -->
+  <div class="newsletter-box reveal mt-40">
+    <h3 style="font-size:1.5rem;margin-bottom:8px">Get Weekly Betting Intelligence</h3>
+    <p style="color:var(--text-secondary);margin-bottom:20px;font-size:14px">Join 8,000+ subscribers. AI picks, strategy guides, and value bet alerts every week.</p>
+    <div style="display:flex;gap:10px;max-width:440px;margin:0 auto">
+      <input type="email" class="form-input flex-1" placeholder="Your email address"/>
+      <button class="btn btn-primary" onclick="showToast('Subscribed! Check your inbox 🎉','success')"><i class="fa fa-paper-plane"></i> Subscribe</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:10px">No spam · Unsubscribe anytime</p>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+const BLOG_POSTS = [
+  { emoji:'💎', bg:'linear-gradient(135deg,#080c14,#1a1a2e)', cat:'VALUE BETTING', catColor:'badge-orange', title:'The Complete Guide to Value Betting: How to Find +EV Opportunities in 2026', excerpt:'Understand what positive expected value really means, how to calculate it, and why focusing on value beats simply picking winners every time.', author:'DataBettor Pro', avBg:'rgba(0,255,136,0.2)', avColor:'var(--accent-green)', date:'March 22, 2026', readTime:'6 min', views:'8.2K' },
+  { emoji:'⚽', bg:'linear-gradient(135deg,#080c14,#0d2012)', cat:'SOCCER', catColor:'badge-cyan', title:'Premier League AI Predictions: Why Sharp Money is Moving on Man City All Season', excerpt:'Our model has tracked consistent sharp line movement toward Man City across all 8 major sportsbooks. Here\'s what the data says.', author:'OddsOracle AI', avBg:'rgba(0,212,255,0.2)', avColor:'var(--accent-cyan)', date:'March 20, 2026', readTime:'5 min', views:'6.7K' },
+  { emoji:'💥', bg:'linear-gradient(135deg,#080c14,#1a0f08)', cat:'CRASH GAMES', catColor:'badge-orange', title:'Aviator Crash Game Strategy: What 10,000 Rounds of Data Actually Tells Us', excerpt:'We analyzed 10,000 Aviator rounds to understand multiplier distributions, streak patterns, and the optimal cashout strategy for different risk tolerances.', author:'CrashAnalyst', avBg:'rgba(255,107,53,0.2)', avColor:'var(--accent-orange)', date:'March 18, 2026', readTime:'7 min', views:'21.4K' },
+  { emoji:'🏀', bg:'linear-gradient(135deg,#080c14,#0d1a26)', cat:'NBA', catColor:'badge-cyan', title:'NBA Spread Betting in 2026: Why Home Court Advantage Is Worth 3 Points (Not 2)', excerpt:'Advanced metrics analysis of 800+ NBA games reveals that home court advantage has increased since 2020 — and the books haven\'t fully adjusted.', author:'NBAAnalytics', avBg:'rgba(124,58,237,0.2)', avColor:'#a78bfa', date:'March 16, 2026', readTime:'5 min', views:'5.1K' },
+  { emoji:'🇳🇬', bg:'linear-gradient(135deg,#080c14,#0a1a0a)', cat:'SPORTSBOOKS', catColor:'badge-green', title:'Top 6 Sports Betting Sites in Nigeria 2026: Ranked by Odds, Payouts & Bonuses', excerpt:'We independently tested and ranked the best Nigerian sportsbooks based on odds quality, payout speed, mobile experience, and bonus value.', author:'BookReviewer', avBg:'rgba(0,255,136,0.2)', avColor:'var(--accent-green)', date:'March 14, 2026', readTime:'10 min', views:'14.8K' },
+  { emoji:'🎯', bg:'linear-gradient(135deg,#080c14,#1a1414)', cat:'BANKROLL', catColor:'badge-purple', title:'Kelly Criterion for Sports Betting: The Mathematically Optimal Bet Sizing Strategy', excerpt:'The Kelly Criterion tells you exactly what percentage of your bankroll to stake on each bet based on your edge. Here\'s how to use it with OddsOracle predictions.', author:'MathBettor', avBg:'rgba(251,191,36,0.2)', avColor:'var(--accent-yellow)', date:'March 12, 2026', readTime:'8 min', views:'9.3K' },
+];
+
+const grid = document.getElementById('blogGrid');
+BLOG_POSTS.forEach(p => {
+  grid.innerHTML += `
+    <div class="blog-card" onclick="window.location.href='#'">
+      <div class="blog-thumb" style="background:${p.bg}">${p.emoji}</div>
+      <div class="blog-body">
+        <div class="blog-cat"><span class="badge ${p.catColor}">${p.cat}</span></div>
+        <div class="blog-title">${p.title}</div>
+        <div class="blog-excerpt">${p.excerpt}</div>
+        <div class="blog-meta">
+          <div class="blog-author"><div class="author-av" style="background:${p.avBg};color:${p.avColor}">${p.author.slice(0,2).toUpperCase()}</div>${p.author}</div>
+          <span>${p.date}</span>
+          <span class="flex gap-8" style="margin-left:auto"><span><i class="fa fa-clock"></i> ${p.readTime}</span><span><i class="fa fa-eye"></i> ${p.views}</span></span>
+        </div>
+      </div>
+    </div>`;
+});
+</script>
+</body>
+</html>

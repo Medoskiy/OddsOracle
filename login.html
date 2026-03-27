@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Login — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+@media(max-width:900px){
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { padding: 24px 16px; align-items: flex-start; padding-top: 80px; min-height: 100vh; }
+  .auth-box { max-width: 100%; }
+}
+@media(max-width:480px){
+  .auth-right { padding: 72px 14px 32px; }
+}
+.auth-left { background: var(--bg-primary); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 60px; }
+.auth-left::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 70% 60% at 40% 60%, rgba(0,255,136,0.08),transparent 70%); }
+.auth-bg-grid { position: absolute; inset:0; background-image:linear-gradient(rgba(0,255,136,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.03) 1px,transparent 1px); background-size:50px 50px; }
+.auth-right { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.auth-box { width: 100%; max-width: 400px; }
+.social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary); transition: var(--transition); width: 100%; margin-bottom: 8px; }
+.social-btn:hover { border-color: var(--accent-cyan); color: var(--text-primary); }
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background: var(--border); }
+.input-wrap { position: relative; }
+.password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 14px; }
+
+/* Username @ prefix for login */
+.login-username-wrap { position: relative; display: flex; align-items: center; }
+.login-at-prefix {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 42px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,212,255,0.08); border: 1px solid var(--border);
+  border-right: none; border-radius: 8px 0 0 8px;
+  font-family: 'Rajdhani', sans-serif; font-size: 17px; font-weight: 700;
+  color: var(--accent-cyan); pointer-events: none; transition: all 0.25s; z-index: 1;
+}
+.login-at-input {
+  border-radius: 0 8px 8px 0 !important;
+  border-left: none !important;
+  padding-left: 14px !important;
+  flex: 1;
+}
+.login-username-wrap:focus-within .login-at-prefix {
+  border-color: var(--accent-cyan);
+  background: rgba(0,212,255,0.14);
+  box-shadow: -3px 0 0 2px rgba(0,212,255,0.1);
+}
+.login-username-wrap:focus-within .login-at-input {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: none !important;
+}
+/* Input type switch hint */
+.input-type-hint {
+  font-size: 11px; margin-top: 5px; display: flex; align-items: center; gap: 6px;
+}
+.switch-link {
+  color: var(--accent-cyan); cursor: pointer; text-decoration: underline;
+  font-size: 11px; background: none; border: none; padding: 0; font-family: inherit;
+}
+.switch-link:hover { color: #fff; }
+.stat-mini { text-align: center; }
+.stat-mini-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; color: var(--accent-green); }
+.stat-mini-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- LEFT -->
+  <div class="auth-left">
+    <div class="auth-bg-grid"></div>
+    <div style="position:relative;z-index:2">
+      <a href="index.html" style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:2px;display:flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:40px">
+        <div class="logo-dot"></div>ODDS<span class="text-cyan">ORACLE</span>
+      </a>
+      <h2 style="font-size:2rem;margin-bottom:12px">Good to have you back.</h2>
+      <p style="color:var(--text-secondary);font-size:15px;margin-bottom:40px;line-height:1.7">Your AI predictions are ready. Live odds are being scanned. Let's find some value.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:32px">
+        <div class="stat-mini"><div class="stat-mini-val">78%</div><div class="stat-mini-lbl">Accuracy</div></div>
+        <div class="stat-mini" style="border-left:1px solid var(--border)"><div class="stat-mini-val">14</div><div class="stat-mini-lbl">Books Live</div></div>
+        <div class="stat-mini" style="border-left:1px solid var(--border)"><div class="stat-mini-val" style="color:var(--accent-orange)">12</div><div class="stat-mini-lbl">Value Bets</div></div>
+      </div>
+
+      <!-- Live activity -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div class="live-badge mb-12"><span class="live-dot"></span> LIVE ACTIVITY</div>
+        <div id="activityFeed" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <h2 style="font-size:1.8rem;margin-bottom:6px">Welcome Back</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:28px">Sign in to your OddsOracle account</p>
+
+      <button class="social-btn"><img src="https://www.google.com/favicon.ico" width="16" height="16" alt=""/> Continue with Google</button>
+      <div class="divider">or sign in with username</div>
+
+      <form id="loginForm" novalidate>
+
+        <!-- Username field (default) -->
+        <div class="form-group" id="usernameField">
+          <label class="form-label">Username</label>
+          <div class="login-username-wrap">
+            <div class="login-at-prefix">@</div>
+            <input type="text" class="form-input login-at-input" id="loginId"
+              placeholder="yourhandle"
+              required
+              autocomplete="username"
+              autocorrect="off"
+              autocapitalize="none"
+              oninput="this.value=this.value.replace(/[^a-zA-Z0-9_.]/g,'').toLowerCase()"/>
+          </div>
+          <div class="input-type-hint">
+            <i class="fa fa-info-circle" style="color:var(--text-muted)"></i>
+            <span style="color:var(--text-muted)">Not your username?</span>
+            <button type="button" class="switch-link" onclick="switchToEmail()">Sign in with email instead</button>
+          </div>
+        </div>
+
+        <!-- Email fallback (hidden by default) -->
+        <div class="form-group" id="emailField" style="display:none">
+          <label class="form-label">Email Address</label>
+          <div class="input-wrap">
+            <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" style="padding-left:36px"/>
+            <i class="fa fa-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px"></i>
+          </div>
+          <div class="input-type-hint">
+            <i class="fa fa-at" style="color:var(--accent-cyan)"></i>
+            <button type="button" class="switch-link" onclick="switchToUsername()">Use @username instead</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <label class="form-label" style="margin:0">Password</label>
+            <a href="#" style="font-size:12px;color:var(--accent-cyan)">Forgot password?</a>
+          </div>
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="loginPass" placeholder="Your password" required style="padding-right:40px"/>
+            <span class="password-toggle" onclick="togglePass()"><i class="fa fa-eye" id="eyeIcon"></i></span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;font-size:13px">
+          <input type="checkbox" id="remember" style="accent-color:var(--accent-cyan)" checked/>
+          <label for="remember" style="cursor:pointer;color:var(--text-secondary)">Keep me signed in for 30 days</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg" id="loginBtn">
+          <i class="fa fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+
+      <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted)">Don't have an account? <a href="register.html" class="text-cyan">Create one free</a></p>
+
+      <!-- Admin link -->
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:center">
+        <a href="admin/index.html" style="font-size:12px;color:var(--text-muted);display:inline-flex;align-items:center;gap:6px">
+          <i class="fa fa-shield-alt"></i> Admin Console Access
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+function togglePass() {
+  const inp = document.getElementById('loginPass');
+  const icon = document.getElementById('eyeIcon');
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa fa-eye-slash'; }
+  else { inp.type = 'password'; icon.className = 'fa fa-eye'; }
+}
+
+// Toggle between username and email login modes
+let loginMode = 'username'; // 'username' | 'email'
+
+function switchToEmail() {
+  loginMode = 'email';
+  document.getElementById('usernameField').style.display = 'none';
+  document.getElementById('emailField').style.display = 'block';
+  document.getElementById('loginEmail').focus();
+  // Update divider text
+  const divider = document.querySelector('.divider');
+  if (divider) divider.textContent = 'or sign in with email';
+}
+
+function switchToUsername() {
+  loginMode = 'username';
+  document.getElementById('emailField').style.display = 'none';
+  document.getElementById('usernameField').style.display = 'block';
+  document.getElementById('loginId').focus();
+  const divider = document.querySelector('.divider');
+  if (divider) divider.textContent = 'or sign in with username';
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const pass = document.getElementById('loginPass').value.trim();
+
+  let identifier, label;
+  if (loginMode === 'username') {
+    identifier = document.getElementById('loginId').value.trim();
+    label      = '@' + identifier;
+  } else {
+    identifier = document.getElementById('loginEmail').value.trim();
+    label      = identifier;
+  }
+
+  if (!identifier || !pass) { showToast('Please enter your credentials', 'error'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signing in...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    showToast(`Welcome back, ${label}! Redirecting...`, 'success');
+    setTimeout(() => window.location.href = 'predictions.html', 1200);
+  }, 1500);
+});
+
+// Live activity feed
+const ACTIVITIES = [
+  { icon:'💎', text:'Value bet flagged: Man City +EV 7.2%', time:'just now', color:'var(--accent-orange)' },
+  { icon:'✓', text:'DataBettor_TZ: Lakers WIN hit ✅', time:'1 min ago', color:'var(--accent-green)' },
+  { icon:'🤖', text:'AI scanned 847 DraftKings markets', time:'2 min ago', color:'var(--accent-cyan)' },
+  { icon:'⚡', text:'Steam alert: Bayern Munich moving', time:'3 min ago', color:'var(--accent-yellow)' },
+  { icon:'👤', text:'12 new members joined today', time:'5 min ago', color:'var(--text-secondary)' },
+];
+
+const feed = document.getElementById('activityFeed');
+ACTIVITIES.forEach(a => {
+  feed.innerHTML += `<div style="display:flex;align-items:center;gap:10px;font-size:12px">
+    <span style="font-size:14px">${a.icon}</span>
+    <span style="flex:1;color:${a.color}">${a.text}</span>
+    <span style="color:var(--text-muted);white-space:nowrap">${a.time}</span>
+  </div>`;
+});
+
+// Periodically add new activity
+setInterval(() => {
+  const items = feed.children;
+  if (items.length > 5) feed.removeChild(items[items.length-1]);
+  const a = ACTIVITIES[Math.floor(Math.random()*ACTIVITIES.length)];
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;gap:10px;font-size:12px;animation:slideUp 0.3s ease';
+  div.innerHTML = `<span style="font-size:14px">${a.icon}</span><span style="flex:1;color:${a.color}">${a.text}</span><span style="color:var(--text-muted)">just now</span>`;
+  feed.insertBefore(div, feed.firstChild);
+}, 4000);
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# OS & editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# VS Code / Cursor
+.vscode/
+.cursor/
+
+# Node (if you ever add a build step)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+secrets.json
+
+# Build output (if added later)
+dist/
+build/
+.cache/
+
+# Logs
+*.log
+logs/

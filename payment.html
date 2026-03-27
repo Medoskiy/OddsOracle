@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pricing — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.plan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: relative; transition: var(--transition); }
+.plan-card:hover { transform: translateY(-4px); }
+.plan-card.featured { border-color: var(--accent-cyan); background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,255,136,0.04)); box-shadow: 0 0 40px rgba(0,212,255,0.12); }
+.plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green)); color: #000; font-size: 11px; font-weight: 800; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.plan-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+.plan-price { font-family: 'JetBrains Mono', monospace; font-size: 3rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.plan-period { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.plan-feature { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(30,45,61,0.4); font-size: 13px; }
+.plan-feature:last-of-type { border-bottom: none; }
+.feat-check { color: var(--accent-green); margin-top: 1px; }
+.feat-x { color: var(--text-muted); margin-top: 1px; }
+.feat-text-dim { color: var(--text-muted); }
+
+/* Payment modal */
+.pay-method { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: var(--transition); margin-bottom: 8px; }
+.pay-method:hover, .pay-method.selected { border-color: var(--accent-cyan); background: var(--accent-cyan-dim); }
+.pay-method-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--bg-secondary); }
+.pay-method-name { font-size: 14px; font-weight: 600; }
+.pay-method-sub { font-size: 12px; color: var(--text-muted); }
+
+/* FAQ mini */
+.mini-faq { max-width: 700px; margin: 60px auto 0; }
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .plan-card { padding: 24px 20px; }
+  .plan-price { font-size: 2.2rem; }
+}
+@media (max-width: 480px) {
+  .plan-card { padding: 20px 16px; margin-top: 16px; }
+  .plan-price { font-size: 2rem; }
+  .plan-feature { font-size: 12px; gap: 8px; }
+  .mini-faq { margin-top: 32px; }
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link">AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link active">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="hero-tag">Transparent Pricing</div>
+    <h1>Simple, Honest <span class="text-cyan">Pricing</span></h1>
+    <p>One powerful plan. Cancel anytime. Start free for 7 days.</p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:80px">
+  <!-- Pricing toggle -->
+  <div style="text-align:center;margin-bottom:40px">
+    <div class="tabs" style="display:inline-flex" id="billingToggle">
+      <button class="tab-btn active" id="monthlyBtn" onclick="setBilling('monthly')">Monthly</button>
+      <button class="tab-btn" id="annualBtn" onclick="setBilling('annual')">Annual <span class="badge badge-green" style="font-size:10px;margin-left:4px">SAVE 20%</span></button>
+    </div>
+  </div>
+
+  <!-- Plans grid -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto 60px" class="reveal" id="plansGrid">
+    <!-- Free -->
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-price text-secondary">₦0</div>
+      <div class="plan-period">Forever free</div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>3 AI predictions per day</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Top 3 sportsbooks only</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Community forum access</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Basic prediction tracker</span></div>
+      <div class="plan-feature"><i class="fa fa-times feat-x"></i><span class="feat-text-dim">Value bet alerts</span></div>
+      <div class="plan-feature"><i class="fa fa-times feat-x"></i><span class="feat-text-dim">All 8 sportsbooks</span></div>
+      <div class="plan-feature"><i class="fa fa-times feat-x"></i><span class="feat-text-dim">Crash game AI signals</span></div>
+      <div class="plan-feature"><i class="fa fa-times feat-x"></i><span class="feat-text-dim">Claude AI verdicts</span></div>
+      <div class="plan-feature"><i class="fa fa-times feat-x"></i><span class="feat-text-dim">SMS/Email alerts</span></div>
+      <a href="register.html" class="btn btn-ghost w-full mt-24">Get Started Free</a>
+    </div>
+
+    <!-- Premium (featured) -->
+    <div class="plan-card featured" id="premiumCard">
+      <div class="plan-badge">⭐ MOST POPULAR</div>
+      <div class="plan-name text-cyan">Premium</div>
+      <div class="plan-price text-cyan" id="premiumPrice">₦5,000</div>
+      <div class="plan-period" id="premiumPeriod">per month · 7-day free trial</div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span><strong>Unlimited</strong> AI predictions</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>All <strong>8 sportsbooks</strong> live</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Value bet detection +EV alerts</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Full prediction tracker + ROI</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Claude AI verdicts on every event</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Crash game AI signals</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>SMS + Email bet alerts</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Forum + community access</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Priority customer support</span></div>
+      <button class="btn btn-primary w-full mt-24 btn-lg" onclick="showPayment()"><i class="fa fa-rocket"></i> Start 7-Day Free Trial</button>
+      <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px">No credit card for trial · Cancel anytime</p>
+    </div>
+
+    <!-- Pro -->
+    <div class="plan-card">
+      <div class="plan-name" style="color:var(--accent-purple)">Pro</div>
+      <div class="plan-price" style="color:var(--accent-purple)" id="proPrice">₦15,000</div>
+      <div class="plan-period" id="proPeriod">per month</div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Everything in Premium</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>API access (1,000 calls/day)</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Custom alert rules builder</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Portfolio bankroll manager</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>White-label for groups/tipsters</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Dedicated account manager</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Early access to new features</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Telegram bot integration</span></div>
+      <div class="plan-feature"><i class="fa fa-check feat-check"></i><span>Weekly analyst video calls</span></div>
+      <button class="btn btn-ghost w-full mt-24" onclick="showPayment('pro')"><i class="fa fa-crown"></i> Go Pro</button>
+    </div>
+  </div>
+
+  <!-- Comparison -->
+  <div class="card reveal" style="max-width:900px;margin:0 auto 40px">
+    <div class="card-title text-center mb-24" style="font-size:1rem;letter-spacing:1px">WHAT'S INCLUDED — FEATURE COMPARISON</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th style="text-align:center">Free</th><th style="text-align:center;color:var(--accent-cyan)">Premium</th><th style="text-align:center;color:#a78bfa">Pro</th></tr></thead>
+        <tbody>
+          <tr><td>AI Predictions per day</td><td style="text-align:center">3</td><td style="text-align:center;color:var(--accent-green)">Unlimited</td><td style="text-align:center;color:var(--accent-green)">Unlimited</td></tr>
+          <tr><td>Sportsbooks scanned</td><td style="text-align:center">3</td><td style="text-align:center;color:var(--accent-green)">8</td><td style="text-align:center;color:var(--accent-green)">8+</td></tr>
+          <tr><td>Value bet alerts</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--accent-green)">✓</td><td style="text-align:center;color:var(--accent-green)">✓</td></tr>
+          <tr><td>Claude AI verdicts</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--accent-green)">✓</td><td style="text-align:center;color:var(--accent-green)">✓</td></tr>
+          <tr><td>Crash game signals</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--accent-green)">✓</td><td style="text-align:center;color:var(--accent-green)">✓</td></tr>
+          <tr><td>SMS/Email alerts</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--accent-green)">✓</td><td style="text-align:center;color:var(--accent-green)">✓</td></tr>
+          <tr><td>API access</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--text-muted)">✗</td><td style="text-align:center;color:var(--accent-green)">✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Payment methods -->
+  <div class="text-center reveal" style="margin-bottom:40px">
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Accepted payment methods</p>
+    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+      <span class="badge badge-cyan">🏦 Bank Transfer</span>
+      <span class="badge badge-cyan">💳 Visa/Mastercard</span>
+      <span class="badge badge-cyan">📱 OPay</span>
+      <span class="badge badge-cyan">📱 PalmPay</span>
+      <span class="badge badge-cyan">🏧 USSD *737#</span>
+      <span class="badge badge-cyan">💚 GTBank</span>
+      <span class="badge badge-green">₿ Crypto</span>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay hidden" id="paymentModal" onclick="if(event.target===this)closePayModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="modal-header">
+      <h3 style="font-family:'Rajdhani',sans-serif"><i class="fa fa-lock" style="color:var(--accent-cyan)"></i> Secure Payment</h3>
+      <button class="modal-close" onclick="closePayModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--accent-cyan-dim);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">SELECTED PLAN</div><div style="font-weight:700;font-size:15px" id="modalPlan">OddsOracle Premium</div></div>
+        <div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--accent-cyan)" id="modalPrice">₦5,000</div><div style="font-size:11px;color:var(--text-muted)">per month</div></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Choose Payment Method</label>
+        <div class="pay-method selected" onclick="selectMethod(this,'card')">
+          <div class="pay-method-icon">💳</div>
+          <div><div class="pay-method-name">Debit/Credit Card</div><div class="pay-method-sub">Visa, Mastercard, Verve</div></div>
+        </div>
+        <div class="pay-method" onclick="selectMethod(this,'bank')">
+          <div class="pay-method-icon">🏦</div>
+          <div><div class="pay-method-name">Bank Transfer</div><div class="pay-method-sub">Direct bank payment</div></div>
+        </div>
+        <div class="pay-method" onclick="selectMethod(this,'ussd')">
+          <div class="pay-method-icon">📱</div>
+          <div><div class="pay-method-name">USSD / Mobile Money</div><div class="pay-method-sub">*737#, OPay, PalmPay</div></div>
+        </div>
+        <div class="pay-method" onclick="selectMethod(this,'crypto')">
+          <div class="pay-method-icon">₿</div>
+          <div><div class="pay-method-name">Cryptocurrency</div><div class="pay-method-sub">BTC, ETH, USDT</div></div>
+        </div>
+      </div>
+      <div id="cardForm">
+        <div class="form-group"><label class="form-label">Card Number</label><input type="text" class="form-input" placeholder="1234 5678 9012 3456" maxlength="19" id="cardNum" oninput="formatCard(this)"/></div>
+        <div class="grid-2" style="gap:12px"><div class="form-group"><label class="form-label">Expiry</label><input type="text" class="form-input" placeholder="MM/YY" maxlength="5"/></div><div class="form-group"><label class="form-label">CVV</label><input type="text" class="form-input" placeholder="•••" maxlength="4" type="password"/></div></div>
+        <div class="form-group"><label class="form-label">Cardholder Name</label><input type="text" class="form-input" placeholder="As printed on card"/></div>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" onclick="processPayment()"><i class="fa fa-lock"></i> Pay Securely — ₦5,000</button>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-muted)"><i class="fa fa-shield-alt"></i> 256-bit SSL Encryption · PCI DSS Compliant</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+function setBilling(type) {
+  document.querySelectorAll('#billingToggle .tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(type+'Btn').classList.add('active');
+  if (type === 'annual') {
+    document.getElementById('premiumPrice').textContent = '₦48,000';
+    document.getElementById('premiumPeriod').textContent = 'per year (save ₦12,000)';
+    document.getElementById('proPrice').textContent = '₦144,000';
+    document.getElementById('proPeriod').textContent = 'per year (save ₦36,000)';
+  } else {
+    document.getElementById('premiumPrice').textContent = '₦5,000';
+    document.getElementById('premiumPeriod').textContent = 'per month · 7-day free trial';
+    document.getElementById('proPrice').textContent = '₦15,000';
+    document.getElementById('proPeriod').textContent = 'per month';
+  }
+}
+
+function showPayment(plan = 'premium') {
+  document.getElementById('paymentModal').classList.remove('hidden');
+  document.getElementById('modalPlan').textContent = plan === 'pro' ? 'OddsOracle Pro' : 'OddsOracle Premium';
+  document.getElementById('modalPrice').textContent = plan === 'pro' ? '₦15,000' : '₦5,000';
+}
+function closePayModal() { document.getElementById('paymentModal').classList.add('hidden'); }
+function selectMethod(el, method) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('cardForm').style.display = method === 'card' ? 'block' : 'none';
+}
+function formatCard(el) {
+  let val = el.value.replace(/\D/g, '').slice(0,16);
+  el.value = val.match(/.{1,4}/g)?.join(' ') || val;
+}
+function processPayment() {
+  const btn = event.target;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    document.getElementById('paymentModal').classList.add('hidden');
+    showToast('Payment successful! Welcome to OddsOracle Premium 🎉', 'success');
+    btn.innerHTML = '<i class="fa fa-lock"></i> Pay Securely';
+    btn.disabled = false;
+    setTimeout(() => window.location.href = 'predictions.html', 2000);
+  }, 2000);
+}
+</script>
+</body>
+</html>

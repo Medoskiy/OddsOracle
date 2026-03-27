@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Forum — OddsOracle Community</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.forum-layout { display: grid; grid-template-columns: 240px 1fr 260px; gap: 24px; padding: 90px 0 60px; }
+@media(max-width:1100px){ .forum-layout { grid-template-columns:1fr; } .forum-sidebar-left, .forum-sidebar-right { display: none; } }
+@media(max-width:768px){
+  .forum-layout { padding: 76px 0 40px; gap: 16px; }
+  .thread-card { padding: 12px 14px; }
+  .thread-title { font-size: 14px; }
+  .thread-meta { gap: 8px; font-size: 11px; }
+  .thread-stats { gap: 8px; }
+  .chat-box { height: 340px; }
+}
+@media(max-width:480px){
+  .forum-layout { padding: 68px 0 32px; }
+  .thread-card { padding: 10px 12px; }
+  .thread-title { font-size: 13px; }
+  .chat-box { height: 300px; }
+  .chat-bubble { max-width: 92%; }
+}
+.forum-sidebar-left, .forum-sidebar-right { position: sticky; top: 84px; height: fit-content; }
+
+/* Category list */
+.cat-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: var(--transition); margin-bottom: 4px; }
+.cat-item:hover, .cat-item.active { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+.cat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--bg-secondary); flex-shrink: 0; }
+.cat-name { font-size: 13px; font-weight: 600; }
+.cat-count { margin-left: auto; font-size: 11px; color: var(--text-muted); background: var(--bg-secondary); padding: 2px 7px; border-radius: 10px; }
+
+/* Thread card */
+.thread-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; cursor: pointer; transition: var(--transition); }
+.thread-card:hover { border-color: var(--border-bright); transform: translateX(3px); }
+.thread-card.pinned { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.03); }
+.thread-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary); }
+.thread-title:hover { color: var(--accent-cyan); }
+.thread-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; }
+.thread-stats { display: flex; gap: 12px; margin-left: auto; }
+
+/* User avatar mini */
+.avatar-sm { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.av1 { background: rgba(0,212,255,0.2); color: var(--accent-cyan); }
+.av2 { background: rgba(0,255,136,0.2); color: var(--accent-green); }
+.av3 { background: rgba(124,58,237,0.2); color: #a78bfa; }
+.av4 { background: rgba(251,191,36,0.2); color: var(--accent-yellow); }
+.av5 { background: rgba(255,107,53,0.2); color: var(--accent-orange); }
+
+/* Chat panel */
+.chat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; height: 420px; display: flex; flex-direction: column; }
+.chat-msgs { flex: 1; overflow-y: auto; padding: 14px; }
+.chat-msg { display: flex; gap: 8px; margin-bottom: 12px; }
+.chat-bubble { background: var(--bg-secondary); border-radius: 10px; padding: 8px 12px; max-width: 85%; }
+.chat-name { font-size: 11px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 2px; }
+.chat-text { font-size: 13px; color: var(--text-secondary); }
+.chat-time { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+.chat-input-row { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+/* Leaderboard */
+.lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(30,45,61,0.4); }
+.lb-row:last-child { border-bottom: none; }
+.lb-rank { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; width: 24px; flex-shrink: 0; }
+.lb-name { font-size: 13px; font-weight: 600; flex: 1; }
+.lb-pct { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--accent-green); }
+</style>
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link"><i class="fa fa-robot" style="font-size:11px"></i> AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link active">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="forum-layout">
+
+    <!-- LEFT: Categories -->
+    <div class="forum-sidebar-left">
+      <div class="card">
+        <div class="card-title mb-16">CATEGORIES</div>
+        <div class="cat-item active"><div class="cat-icon">🔥</div><span class="cat-name">All Posts</span><span class="cat-count">824</span></div>
+        <div class="cat-item"><div class="cat-icon">⚽</div><span class="cat-name">Soccer</span><span class="cat-count">312</span></div>
+        <div class="cat-item"><div class="cat-icon">🏀</div><span class="cat-name">NBA</span><span class="cat-count">198</span></div>
+        <div class="cat-item"><div class="cat-icon">🏈</div><span class="cat-name">NFL</span><span class="cat-count">143</span></div>
+        <div class="cat-item"><div class="cat-icon">🎾</div><span class="cat-name">Tennis</span><span class="cat-count">87</span></div>
+        <div class="cat-item"><div class="cat-icon">💥</div><span class="cat-name">Crash Games</span><span class="cat-count">64</span></div>
+        <div class="cat-item"><div class="cat-icon">💎</div><span class="cat-name">Value Bets</span><span class="cat-count">112</span></div>
+        <div class="cat-item"><div class="cat-icon">🤖</div><span class="cat-name">AI Strategies</span><span class="cat-count">58</span></div>
+        <div class="cat-item"><div class="cat-icon">💬</div><span class="cat-name">General</span><span class="cat-count">201</span></div>
+      </div>
+      <div class="card mt-16">
+        <div class="card-title mb-12">ONLINE NOW</div>
+        <div class="flex gap-8" style="flex-wrap:wrap">
+          <span class="live-badge"><span class="live-dot"></span> <span id="onlineCount">284</span> members online</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: Threads -->
+    <div>
+      <div class="flex-between mb-20" style="flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:1.8rem">Community <span class="text-cyan">Forum</span></h2>
+          <p style="color:var(--text-secondary);font-size:13px;margin-top:4px">Share picks, strategies, and connect with fellow bettors</p>
+        </div>
+        <button class="btn btn-primary" onclick="showNewPost()"><i class="fa fa-plus"></i> New Post</button>
+      </div>
+
+      <!-- Search -->
+      <div class="flex gap-10 mb-20">
+        <input type="text" class="form-input flex-1" placeholder="🔍  Search threads..." id="forumSearch"/>
+        <select class="form-input form-select" style="width:140px">
+          <option>Latest</option><option>Most Liked</option><option>Most Replies</option><option>Unanswered</option>
+        </select>
+      </div>
+
+      <!-- Live Chat -->
+      <div class="card mb-20">
+        <div class="card-header">
+          <span class="card-title"><i class="fa fa-comments" style="color:var(--accent-cyan)"></i> Live Chat Room</span>
+          <span class="live-badge"><span class="live-dot"></span> 284 Online</span>
+        </div>
+        <div class="chat-box">
+          <div class="chat-msgs" id="chatMsgs"></div>
+          <div class="chat-input-row">
+            <input type="text" class="form-input flex-1" placeholder="Type a message..." id="chatInput" style="padding:8px 12px"/>
+            <button class="btn btn-primary btn-sm" onclick="sendChat()"><i class="fa fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threads -->
+      <div id="threadsContainer"></div>
+
+      <!-- New post modal trigger area -->
+      <div id="newPostModal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <h3 style="font-family:'Rajdhani',sans-serif">Create New Post</h3>
+            <button class="modal-close" onclick="document.getElementById('newPostModal').classList.add('hidden')">✕</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Category</label><select class="form-input form-select"><option>Soccer</option><option>NBA</option><option>NFL</option><option>Crash Games</option><option>Value Bets</option><option>General</option></select></div>
+            <div class="form-group"><label class="form-label">Title</label><input type="text" class="form-input" placeholder="e.g. Man City looks unstoppable — bet breakdown"/></div>
+            <div class="form-group"><label class="form-label">Content</label><textarea class="form-input" rows="5" placeholder="Share your analysis, pick, or strategy..."></textarea></div>
+            <button class="btn btn-primary w-full" onclick="submitPost()"><i class="fa fa-paper-plane"></i> Post</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <div class="forum-sidebar-right">
+      <!-- Leaderboard -->
+      <div class="card mb-16">
+        <div class="card-title mb-16">🏆 TOP TIPSTERS</div>
+        <div id="leaderboard"></div>
+      </div>
+      <!-- Hot topics -->
+      <div class="card">
+        <div class="card-title mb-16">🔥 TRENDING</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#CL_Draw_2026</a>
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#ManCity_Treble</a>
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#CrashStrategy</a>
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#ValueBetAlert</a>
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#LakersRun</a>
+          <a href="#" style="font-size:13px;color:var(--text-secondary)">#BankrollManagement</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+const THREADS = [
+  { id:1, pinned:true, cat:'⚽ Soccer', title:'🔥 Man City vs Arsenal — Full breakdown + VALUE BET found', author:'OddsOracle AI', av:'av1', avTxt:'AI', time:'2 min ago', replies:47, likes:128, content:'Our AI model flagged a +7.2% edge on Man City to win. Line movement has been strongly in their favour since 6am. Injury update: Arsenal\'s key midfielder is questionable. GRADE A pick.', badge:'badge-green', badgeText:'VALUE BET' },
+  { id:2, pinned:true, cat:'💥 Crash', title:'My crash game strategy that made me ₦240k this month 🚀', author:'CrashKing_NG', av:'av2', avTxt:'CK', time:'15 min ago', replies:93, likes:204, content:'I\'ve been using OddsOracle\'s crash AI signals for 3 weeks. Here\'s my exact system: 1.5x base cashout, increase to 2.2x when AI confidence >80%. Never exceed 10% bankroll per round.', badge:'badge-orange', badgeText:'POPULAR' },
+  { id:3, pinned:false, cat:'🏀 NBA', title:'Lakers -3.5 is the best line I\'ve seen all week — analysis inside', author:'Kwame_GH', av:'av3', avTxt:'KG', time:'32 min ago', replies:28, likes:67, content:'Sharp money has been hammering the Lakers spread all week. Their opponent is missing their starting PG. OddsOracle gives this an 82% confidence. Best odds at bet365.', badge:null, badgeText:null },
+  { id:4, pinned:false, cat:'💎 Value Bets', title:'How to use the Value Bet filter properly — beginner guide', author:'ProTipster_KE', av:'av4', avTxt:'PT', time:'1 hr ago', replies:56, likes:89, content:'I see a lot of people ignoring the value bet filter. Here\'s the thing: ANY pick with edge > 4% and confidence > 78% is worth a unit. Don\'t be scared of draws either.', badge:'badge-cyan', badgeText:'GUIDE' },
+  { id:5, pinned:false, cat:'🤖 AI Strategies', title:'I tested OddsOracle for 30 days — here are the real results', author:'DataBettor_TZ', av:'av5', avTxt:'DB', time:'3 hr ago', replies:142, likes:311, content:'30 days, 68 predictions, following Grade A and B picks only. My results: 52 wins, 16 losses. That\'s 76.5% hit rate. ROI of +18.4% on 1 unit bets. Full spreadsheet in comments.', badge:'badge-purple', badgeText:'REVIEW' },
+  { id:6, pinned:false, cat:'⚽ Soccer', title:'Champions League predictions thread — who wins the final?', author:'FootballGuru_NG', av:'av1', avTxt:'FG', time:'5 hr ago', replies:78, likes:155, content:'Let\'s discuss the CL final predictions. AI has Bayern Munich at 67% favored in their semi. Who do you think lifts the trophy?', badge:null, badgeText:null },
+];
+
+const CHAT_MSGS = [
+  { name:'CrashKing_NG', av:'av2', text:'Just cashed out at 3.4x — AI said 2.8x safe target 🔥', time:'12:34' },
+  { name:'Kwame_GH', av:'av3', text:'Man City line just moved again at DraftKings. Sharps are all over it', time:'12:35' },
+  { name:'ProTipster_KE', av:'av4', text:'Anyone watching the CL draw tonight?', time:'12:36' },
+  { name:'OddsOracle AI', av:'av1', text:'⚡ VALUE ALERT: Bayern Munich +220 moving at BetMGM — edge +6.8%', time:'12:37' },
+  { name:'DataBettor_TZ', av:'av5', text:'Following all Grade A picks this week. Already 3/3 ✅', time:'12:38' },
+  { name:'FootballGuru_NG', av:'av1', text:'@Kwame_GH what odds you getting at your book?', time:'12:39' },
+];
+
+const LB_DATA = [
+  { rank:1, name:'DataBettor_TZ', pct:'76.5%', picks:68 },
+  { rank:2, name:'CrashKing_NG', pct:'74.2%', picks:91 },
+  { rank:3, name:'ProTipster_KE', pct:'72.8%', picks:54 },
+  { rank:4, name:'FootballGuru_NG', pct:'71.0%', picks:47 },
+  { rank:5, name:'Kwame_GH', pct:'70.3%', picks:39 },
+  { rank:6, name:'OddsOracle_VIP', pct:'69.8%', picks:112 },
+  { rank:7, name:'SharpMoney_NG', pct:'68.5%', picks:83 },
+  { rank:8, name:'BetSmart_GH', pct:'67.2%', picks:61 },
+];
+
+// Render threads
+const container = document.getElementById('threadsContainer');
+THREADS.forEach(t => {
+  const div = document.createElement('div');
+  div.className = 'thread-card' + (t.pinned ? ' pinned' : '');
+  div.innerHTML = `
+    <div class="flex gap-10 mb-10" style="align-items:flex-start">
+      <div class="avatar-sm ${t.av}">${t.avTxt}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          ${t.pinned ? '<span style="font-size:11px;color:var(--accent-yellow)">📌 PINNED</span>' : ''}
+          <span class="badge badge-cyan" style="font-size:10px">${t.cat}</span>
+          ${t.badge ? `<span class="badge ${t.badge}" style="font-size:10px">${t.badgeText}</span>` : ''}
+        </div>
+        <div class="thread-title">${t.title}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin:6px 0 8px">${t.content.slice(0,120)}...</div>
+        <div class="thread-meta">
+          <span><strong style="color:var(--text-secondary)">${t.author}</strong></span>
+          <span>${t.time}</span>
+          <div class="thread-stats">
+            <span><i class="fa fa-comment" style="color:var(--accent-cyan)"></i> ${t.replies}</span>
+            <span><i class="fa fa-heart" style="color:#ef4444"></i> ${t.likes}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+});
+
+// Render chat
+const chatMsgs = document.getElementById('chatMsgs');
+CHAT_MSGS.forEach(m => {
+  chatMsgs.innerHTML += `<div class="chat-msg">
+    <div class="avatar-sm ${m.av}" style="flex-shrink:0">${m.av==='av1'?'AI':m.name.slice(0,2).toUpperCase()}</div>
+    <div class="chat-bubble">
+      <div class="chat-name">${m.name}</div>
+      <div class="chat-text">${m.text}</div>
+      <div class="chat-time">${m.time}</div>
+    </div>
+  </div>`;
+});
+chatMsgs.scrollTop = chatMsgs.scrollHeight;
+
+// Render leaderboard
+const lbEl = document.getElementById('leaderboard');
+LB_DATA.forEach((u, i) => {
+  const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+  lbEl.innerHTML += `<div class="lb-row">
+    <span class="lb-rank">${medal || '#'+u.rank}</span>
+    <div class="avatar-sm av${(i%5)+1}" style="width:24px;height:24px;font-size:10px">${u.name.slice(0,2).toUpperCase()}</div>
+    <span class="lb-name">${u.name}</span>
+    <span class="lb-pct">${u.pct}</span>
+  </div>`;
+});
+
+// Chat send
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  const ts = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+  chatMsgs.innerHTML += `<div class="chat-msg" style="flex-direction:row-reverse">
+    <div class="avatar-sm av2" style="flex-shrink:0">ME</div>
+    <div class="chat-bubble" style="background:var(--accent-cyan-dim);border:1px solid rgba(0,212,255,0.2)">
+      <div class="chat-name" style="color:var(--accent-cyan)">You</div>
+      <div class="chat-text">${val}</div>
+      <div class="chat-time">${ts}</div>
+    </div>
+  </div>`;
+  input.value = '';
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  showToast('Message sent!', 'success');
+}
+document.getElementById('chatInput').addEventListener('keydown', e => { if(e.key==='Enter') sendChat(); });
+
+function showNewPost() { document.getElementById('newPostModal').classList.remove('hidden'); }
+function closeModal(e) { document.getElementById('newPostModal').classList.add('hidden'); }
+function submitPost() {
+  document.getElementById('newPostModal').classList.add('hidden');
+  showToast('Post published successfully!', 'success');
+}
+
+// Search
+document.getElementById('forumSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.thread-card').forEach((c, i) => {
+    c.style.display = THREADS[i]?.title.toLowerCase().includes(q) ? '' : 'none';
+  });
+});
+
+// Simulate online count fluctuation
+setInterval(() => {
+  const base = 284;
+  document.getElementById('onlineCount').textContent = base + Math.floor(Math.random()*20 - 10);
+}, 5000);
+</script>
+</body>
+</html>

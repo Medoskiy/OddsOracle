@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OddsOracle — Admin Console</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root {
+  --bg: #080c14; --bg2: #0d1421; --bg3: #111827; --bg4: #0f1923;
+  --cyan: #00d4ff; --cyan-dim: rgba(0,212,255,0.12); --cyan-border: rgba(0,212,255,0.25);
+  --green: #00ff88; --green-dim: rgba(0,255,136,0.1);
+  --orange: #ff6b35; --orange-dim: rgba(255,107,53,0.12);
+  --red: #ef4444; --yellow: #fbbf24; --purple: #7c3aed;
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #4b5563;
+  --border: #1e2d3d; --border2: #2d4a6b;
+  --glow: 0 0 20px rgba(0,212,255,0.25);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; display: flex; min-height: 100vh; overflow-x: hidden; }
+::-webkit-scrollbar { width: 5px; height: 5px; } ::-webkit-scrollbar-track { background: var(--bg2); } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+a { color: var(--cyan); text-decoration: none; } h1,h2,h3,h4 { font-family: 'Rajdhani', sans-serif; font-weight: 700; }
+
+/* ── Sidebar ── */
+.sidebar { width: 220px; min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+.sidebar-logo { padding: 20px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.sidebar-logo-text { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #fff; }
+.sidebar-logo-text span { color: var(--cyan); }
+.logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; flex-shrink: 0; }
+.sidebar-sub { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); padding: 14px 18px 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 18px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.2s; color: var(--text2); font-size: 13px; font-weight: 500; position: relative; }
+.nav-item:hover { background: rgba(0,212,255,0.05); color: var(--text); }
+.nav-item.active { background: rgba(0,212,255,0.08); border-left-color: var(--cyan); color: var(--cyan); }
+.nav-item i { width: 16px; text-align: center; font-size: 13px; }
+.nav-badge { margin-left: auto; background: var(--orange); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+.nav-badge-green { background: var(--green); color: #000; }
+.sidebar-footer { margin-top: auto; padding: 16px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.user-av { width: 34px; height: 34px; border-radius: 50%; background: var(--cyan-dim); border: 1px solid var(--cyan-border); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--cyan); flex-shrink: 0; }
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role { font-size: 10px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+
+/* ── Main ── */
+.main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { height: 56px; background: rgba(8,12,20,0.95); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 50; backdrop-filter: blur(10px); }
+.topbar-title { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+.topbar-breadcrumb { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.status-pill { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.status-live { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,255,136,0.25); }
+.status-alert { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,107,53,0.25); }
+.clock-display { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text2); background: var(--bg2); padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border); }
+.dot-anim { width: 7px; height: 7px; border-radius: 50%; animation: pulse 1.5s infinite; }
+.dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+
+/* ── Content areas ── */
+.content { padding: 24px; flex: 1; }
+.page { display: none; } .page.active { display: block; }
+.section-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+.card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text2); }
+.glow-line { height: 1px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); margin: 16px 0; }
+
+/* ── KPI Cards ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.kpi { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 18px; display: flex; align-items: flex-start; gap: 14px; transition: all 0.2s; }
+.kpi:hover { border-color: var(--border2); }
+.kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+.kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+.kpi-change { font-size: 11px; font-weight: 600; margin-top: 4px; }
+.kpi-up { color: var(--green); } .kpi-dn { color: var(--red); }
+.k-cyan { background: var(--cyan-dim); color: var(--cyan); }
+.k-green { background: var(--green-dim); color: var(--green); }
+.k-orange { background: var(--orange-dim); color: var(--orange); }
+.k-red { background: rgba(239,68,68,0.12); color: var(--red); }
+.k-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+.k-yellow { background: rgba(251,191,36,0.12); color: var(--yellow); }
+
+/* ── Grid layouts ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+/* ── Activity feed ── */
+.feed-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(30,45,61,0.5); font-size: 12px; }
+.feed-item:last-child { border-bottom: none; }
+.feed-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.fd-green { background: var(--green); }
+.fd-cyan { background: var(--cyan); }
+.fd-orange { background: var(--orange); }
+.fd-red { background: var(--red); }
+.feed-time { margin-left: auto; color: var(--text3); white-space: nowrap; }
+
+/* ── Progress ── */
+.prog-track { background: #1a2535; border-radius: 6px; height: 6px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 6px; }
+.p-cyan { background: linear-gradient(90deg, var(--cyan), #0099ff); }
+.p-green { background: linear-gradient(90deg, var(--green), #00cc66); }
+.p-orange { background: linear-gradient(90deg, var(--orange), #ff9500); }
+.p-red { background: linear-gradient(90deg, var(--red), #cc2222); }
+
+/* ── Badges ── */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.b-cyan { background: var(--cyan-dim); color: var(--cyan); border: 1px solid var(--cyan-border); }
+.b-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,255,136,0.25); }
+.b-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(255,107,53,0.25); }
+.b-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.b-purple { background: rgba(124,58,237,0.15); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+.b-yellow { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+.btn-primary { background: linear-gradient(135deg, var(--cyan), #0099cc); color: #000; font-weight: 700; }
+.btn-primary:hover { box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+.btn-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: var(--red); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-green { background: linear-gradient(135deg, var(--green), #00cc66); color: #000; font-weight: 700; }
+
+/* ── Tables ── */
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 10px 14px; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); border-bottom: 1px solid var(--border); }
+tbody td { padding: 12px 14px; border-bottom: 1px solid rgba(30,45,61,0.4); font-size: 12px; vertical-align: middle; }
+tbody tr:hover { background: rgba(0,212,255,0.03); }
+tbody tr:last-child td { border-bottom: none; }
+.table-wrap { overflow-x: auto; }
+
+/* ── Slider ── */
+.slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.slider-label { font-size: 12px; color: var(--text2); width: 180px; flex-shrink: 0; }
+.slider { flex: 1; -webkit-appearance: none; height: 5px; border-radius: 3px; background: #1a2535; outline: none; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--cyan); cursor: pointer; box-shadow: 0 0 6px rgba(0,212,255,0.4); }
+.slider-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: var(--cyan); width: 36px; text-align: right; }
+
+/* ── Form inputs ── */
+.form-input { width: 100%; padding: 8px 12px; background: var(--bg4); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-size: 13px; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+.form-input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,212,255,0.1); }
+.form-input::placeholder { color: var(--text3); }
+.form-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text2); display: block; margin-bottom: 6px; }
+.form-group { margin-bottom: 14px; }
+.form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2364748b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+
+/* ── Crawler cards ── */
+.crawler-card { background: var(--bg4); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all 0.2s; }
+.crawler-card:hover { border-color: var(--border2); }
+.crawler-card.paused { border-color: rgba(255,107,53,0.3); }
+.crawler-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; }
+.crawler-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.crawler-latency { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+
+/* ── Logs ── */
+.log-line { padding: 4px 10px; border-bottom: 1px solid rgba(30,45,61,0.3); font-family: 'JetBrains Mono', monospace; font-size: 11px; display: flex; gap: 12px; }
+.log-line:hover { background: rgba(0,212,255,0.03); }
+.log-ts { color: var(--text3); flex-shrink: 0; }
+.log-level { width: 40px; flex-shrink: 0; }
+.log-info { color: var(--cyan); } .log-warn { color: var(--yellow); } .log-error { color: var(--red); }
+.log-body { flex: 1; color: var(--text2); }
+
+/* ── Toggle ── */
+.toggle { width: 38px; height: 20px; background: #1a2535; border-radius: 10px; cursor: pointer; position: relative; transition: all 0.2s; border: 1px solid var(--border); }
+.toggle.on { background: rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.4); }
+.toggle::after { content:''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--text3); top: 2px; left: 2px; transition: all 0.2s; }
+.toggle.on::after { background: var(--green); left: 20px; box-shadow: 0 0 6px rgba(0,255,136,0.5); }
+
+/* ── Alert cards ── */
+.alert-card { background: var(--bg4); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 10px; border-left: 3px solid var(--orange); }
+.alert-card.warn { border-left-color: var(--yellow); }
+.alert-card.info { border-left-color: var(--cyan); }
+
+/* ── Health bar ── */
+.health-item { margin-bottom: 14px; }
+.health-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: var(--text2); }
+.health-val { font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.modal { background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; }
+.modal-close { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { color: var(--cyan); border-color: var(--cyan); }
+
+/* ── Animations ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+.fade-in { animation: fadeIn 0.3s ease; }
+
+/* ── Admin Mobile & Tablet Responsive ── */
+/* Mobile toggle button for sidebar */
+.sidebar-toggle { display: none; position: fixed; top: 14px; left: 14px; z-index: 200; width: 36px; height: 36px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--text2); }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 99; }
+
+@media (max-width: 1024px) {
+  .sidebar { width: 200px; }
+  .main { margin-left: 200px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .grid-3 { grid-template-columns: 1fr 1fr !important; }
+}
+@media (max-width: 768px) {
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar { transform: translateX(-100%); transition: transform 0.28s ease; width: 240px; z-index: 150; }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .sidebar-toggle { display: flex; }
+  .main { margin-left: 0; }
+  .topbar { padding: 0 12px 0 58px; }
+  .topbar-title { font-size: 15px; }
+  .topbar-right .status-pill { display: none; }
+  .content { padding: 14px 10px !important; }
+
+  /* Grids */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+  .grid-3 { grid-template-columns: 1fr !important; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .card { padding: 14px !important; }
+
+  /* Tables */
+  .table-container, [style*="overflow-x:auto"], [style*="overflow-x: auto"] { overflow-x: auto; }
+  table { min-width: 520px; }
+  thead th { font-size: 10px; padding: 8px 10px; }
+  tbody td { font-size: 12px; padding: 9px 10px; }
+
+  /* Charts */
+  canvas { max-height: 220px; }
+}
+@media (max-width: 480px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .grid-4 { grid-template-columns: 1fr 1fr !important; }
+  .content { padding: 10px 8px !important; }
+  .topbar-title { font-size: 13px; }
+  .modal { max-width: calc(100vw - 20px) !important; }
+  .modal-body { padding: 12px; }
+}
+
+/* ── Misc ── */
+.text-cyan { color: var(--cyan); } .text-green { color: var(--green); } .text-orange { color: var(--orange); } .text-red { color: var(--red); } .text-muted { color: var(--text3); } .text-secondary { color: var(--text2); }
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.flex{display:flex}.flex-between{display:flex;align-items:center;justify-content:space-between}.flex-center{display:flex;align-items:center}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}
+.mono { font-family: 'JetBrains Mono', monospace; }
+.hidden { display: none !important; }
+.w-full { width: 100%; }
+.editable-badge { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid var(--cyan-border); border-radius: 6px; font-size: 10px; font-weight: 700; padding: 3px 8px; letter-spacing: 1px; cursor: pointer; }
+.textarea-dark { resize: vertical; min-height: 100px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<!-- Mobile sidebar toggle -->
+<button class="sidebar-toggle" id="adminSidebarToggle" title="Menu"><i class="fa fa-bars"></i></button>
+<div class="sidebar-overlay" id="adminSidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="adminSidebar">
+  <div class="sidebar-logo">
+    <div class="logo-dot"></div>
+    <div>
+      <div class="sidebar-logo-text">ODDS<span>ORACLE</span></div>
+      <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">ADMIN CONSOLE</div>
+    </div>
+  </div>
+
+  <div class="sidebar-sub">OVERVIEW</div>
+  <div class="nav-item active" onclick="goto('dashboard')"><i class="fa fa-chart-bar"></i> Dashboard</div>
+  <div class="nav-item" onclick="goto('analytics')"><i class="fa fa-chart-line"></i> Analytics</div>
+
+  <div class="sidebar-sub">SYSTEM</div>
+  <div class="nav-item" onclick="goto('crawlers')"><i class="fa fa-spider"></i> Crawlers <span class="nav-badge nav-badge-green">8</span></div>
+  <div class="nav-item" onclick="goto('aimodel')"><i class="fa fa-robot"></i> AI Model</div>
+  <div class="nav-item" onclick="goto('sportsbooks')"><i class="fa fa-building"></i> Sportsbooks</div>
+
+  <div class="sidebar-sub">OPERATIONS</div>
+  <div class="nav-item" onclick="goto('predictions')"><i class="fa fa-crosshairs"></i> Predictions</div>
+  <div class="nav-item" onclick="goto('alerts')"><i class="fa fa-bell"></i> Alerts <span class="nav-badge">3</span></div>
+  <div class="nav-item" onclick="goto('users')"><i class="fa fa-users"></i> Users</div>
+
+  <div class="sidebar-sub">CONFIG</div>
+  <div class="nav-item" onclick="goto('settings')"><i class="fa fa-cog"></i> Settings</div>
+  <div class="nav-item" onclick="goto('logs')"><i class="fa fa-terminal"></i> System Logs</div>
+
+  <div class="sidebar-footer">
+    <div class="user-av">A</div>
+    <div>
+      <div class="user-name">Admin</div>
+      <div class="user-role">Super Admin</div>
+    </div>
+    <a href="../login.html" style="margin-left:auto;color:var(--text3);font-size:13px" title="Logout"><i class="fa fa-sign-out-alt"></i></a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      <div class="topbar-breadcrumb" id="topbarBreadcrumb">OddsOracle › System › Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill status-live"><div class="dot-anim dot-green"></div> ALL CRAWLERS LIVE</div>
+      <div class="status-pill status-alert"><div class="dot-anim dot-orange"></div> 3 ALERTS</div>
+      <div class="clock-display" id="adminClock">—</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════════ DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-icon k-cyan"><i class="fa fa-chart-bar"></i></div><div><div class="kpi-val text-cyan" id="kpiScans">—</div><div class="kpi-label">Total Scans Today</div><div class="kpi-change kpi-up">↑ +12.4% vs yesterday</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-green"><i class="fa fa-crosshairs"></i></div><div><div class="kpi-val text-green">78.4%</div><div class="kpi-label">Model Accuracy (14d)</div><div class="kpi-change kpi-up">↑ +2.1% vs last week</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-orange"><i class="fa fa-gem"></i></div><div><div class="kpi-val" style="color:var(--orange)" id="kpiValueBets">—</div><div class="kpi-label">Value Bets Today</div><div class="kpi-change kpi-up">↑ +3 vs avg</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-purple"><i class="fa fa-users"></i></div><div><div class="kpi-val" style="color:#a78bfa" id="kpiUsers">—</div><div class="kpi-label">Active Users</div><div class="kpi-change kpi-up">↑ +284 new today</div></div></div>
+      </div>
+
+      <div class="grid-2 mb-16">
+        <!-- Scan volume chart -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fa fa-chart-area" style="color:var(--cyan)"></i> 14-Day Scan Volume</span>
+            <span class="badge b-cyan">Live</span>
+          </div>
+          <div style="height:200px"><canvas id="scanChart"></canvas></div>
+        </div>
+        <!-- Accuracy gauge -->
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="fa fa-bullseye" style="color:var(--green)"></i> Prediction Accuracy</span></div>
+          <div style="height:200px;display:flex;align-items:center;justify-content:center"><canvas id="gaugeChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Crawler status grid -->
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="fa fa-spider" style="color:var(--cyan)"></i> Crawler Status</span></div>
+          <div class="grid-4" id="crawlerStatusGrid"></div>
+        </div>
+        <!-- Activity feed -->
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="fa fa-bolt" style="color:var(--yellow)"></i> Live Activity Feed</span><span class="badge b-green">Auto-update</span></div>
+          <div id="activityFeed" style="max-height:220px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-icon k-cyan"><i class="fa fa-percentage"></i></div><div><div class="kpi-val text-cyan">78.4%</div><div class="kpi-label">Overall Accuracy</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-green"><i class="fa fa-coins"></i></div><div><div class="kpi-val text-green">+23.4%</div><div class="kpi-label">Platform ROI</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-orange"><i class="fa fa-gem"></i></div><div><div class="kpi-val" style="color:var(--orange)">142</div><div class="kpi-label">Value Bets (7d)</div></div></div>
+        <div class="kpi"><div class="kpi-icon k-purple"><i class="fa fa-layer-group"></i></div><div><div class="kpi-val" style="color:#a78bfa">15,413</div><div class="kpi-label">Markets Scanned</div></div></div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card">
+          <div class="card-header"><span class="card-title">ACCURACY BY SPORT</span></div>
+          <div style="height:220px"><canvas id="sportChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">PREDICTIONS BY SPORTSBOOK</span></div>
+          <div style="height:220px"><canvas id="bookChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">PERFORMANCE TABLE</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sport</th><th>Predictions</th><th>Wins</th><th>Losses</th><th>Hit Rate</th><th>Avg Confidence</th><th>ROI</th></tr></thead>
+            <tbody>
+              <tr><td>⚽ Soccer</td><td>312</td><td>253</td><td>59</td><td><span style="color:var(--green);font-weight:700">81.1%</span></td><td>82%</td><td style="color:var(--green);font-weight:700">+28.4%</td></tr>
+              <tr><td>🎾 Tennis</td><td>87</td><td>72</td><td>15</td><td><span style="color:var(--green);font-weight:700">82.8%</span></td><td>84%</td><td style="color:var(--green);font-weight:700">+31.2%</td></tr>
+              <tr><td>🏀 NBA</td><td>198</td><td>151</td><td>47</td><td><span style="color:var(--yellow);font-weight:700">76.3%</span></td><td>78%</td><td style="color:var(--green);font-weight:700">+18.7%</td></tr>
+              <tr><td>🏈 NFL</td><td>143</td><td>107</td><td>36</td><td><span style="color:var(--yellow);font-weight:700">74.8%</span></td><td>76%</td><td style="color:var(--green);font-weight:700">+14.2%</td></tr>
+              <tr><td>🥊 Boxing</td><td>52</td><td>40</td><td>12</td><td><span style="color:var(--yellow);font-weight:700">77.4%</span></td><td>79%</td><td style="color:var(--green);font-weight:700">+19.8%</td></tr>
+              <tr><td>🎯 Darts</td><td>38</td><td>30</td><td>8</td><td><span style="color:var(--green);font-weight:700">80.1%</span></td><td>81%</td><td style="color:var(--green);font-weight:700">+24.3%</td></tr>
+              <tr><td>⚾ Baseball</td><td>74</td><td>54</td><td>20</td><td><span style="color:var(--yellow);font-weight:700">72.6%</span></td><td>74%</td><td style="color:var(--green);font-weight:700">+11.4%</td></tr>
+              <tr><td>🏸 Badminton</td><td>41</td><td>33</td><td>8</td><td><span style="color:var(--yellow);font-weight:700">79.3%</span></td><td>80%</td><td style="color:var(--green);font-weight:700">+22.1%</td></tr>
+              <tr><td>🏏 Cricket</td><td>63</td><td>50</td><td>13</td><td><span style="color:var(--yellow);font-weight:700">78.5%</span></td><td>79%</td><td style="color:var(--green);font-weight:700">+20.7%</td></tr>
+              <tr><td>🏎️ Formula 1</td><td>44</td><td>33</td><td>11</td><td><span style="color:var(--yellow);font-weight:700">75.2%</span></td><td>76%</td><td style="color:var(--green);font-weight:700">+15.9%</td></tr>
+              <tr><td>🏐 Volleyball</td><td>35</td><td>27</td><td>8</td><td><span style="color:var(--yellow);font-weight:700">76.8%</span></td><td>77%</td><td style="color:var(--green);font-weight:700">+17.2%</td></tr>
+              <tr><td>🤽 Water Polo</td><td>28</td><td>21</td><td>7</td><td><span style="color:var(--yellow);font-weight:700">73.9%</span></td><td>75%</td><td style="color:var(--green);font-weight:700">+12.6%</td></tr>
+              <tr><td>⛳ Golf</td><td>32</td><td>23</td><td>9</td><td><span style="color:var(--orange);font-weight:700">71.4%</span></td><td>72%</td><td style="color:var(--green);font-weight:700">+9.8%</td></tr>
+              <tr><td>🚴 Cycling</td><td>26</td><td>19</td><td>7</td><td><span style="color:var(--yellow);font-weight:700">74.1%</span></td><td>75%</td><td style="color:var(--green);font-weight:700">+13.3%</td></tr>
+              <tr><td>💥 Crash</td><td>64</td><td>44</td><td>20</td><td><span style="color:var(--orange);font-weight:700">68.8%</span></td><td>71%</td><td style="color:var(--green);font-weight:700">+9.1%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ CRAWLERS -->
+    <div class="page" id="page-crawlers">
+      <div class="flex-between mb-16">
+        <div>
+          <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">Crawler Management</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Monitor and configure all 8 sportsbook crawlers</div>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="pauseAll()"><i class="fa fa-pause"></i> Pause All</button>
+          <button class="btn btn-primary btn-sm" onclick="startAll()"><i class="fa fa-play"></i> Start All</button>
+        </div>
+      </div>
+      <div class="grid-4 mb-20" id="crawlerCards"></div>
+
+      <!-- Config panel -->
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fa fa-sliders-h" style="color:var(--cyan)"></i> Crawler Configuration</span><button class="btn btn-primary btn-sm"><i class="fa fa-save"></i> Save Config</button></div>
+        <div class="grid-2" style="gap:24px">
+          <div>
+            <div class="slider-row"><span class="slider-label">Scan Interval (seconds)</span><input type="range" class="slider" min="30" max="300" value="60" oninput="this.nextElementSibling.textContent=this.value+'s'"/><span class="slider-val">60s</span></div>
+            <div class="slider-row"><span class="slider-label">Request Timeout (ms)</span><input type="range" class="slider" min="1000" max="10000" value="5000" oninput="this.nextElementSibling.textContent=this.value+'ms'"/><span class="slider-val">5000ms</span></div>
+            <div class="slider-row"><span class="slider-label">Concurrency Level</span><input type="range" class="slider" min="1" max="10" value="4" oninput="this.nextElementSibling.textContent=this.value"/><span class="slider-val">4</span></div>
+            <div class="slider-row"><span class="slider-label">Proxy Rotation Rate</span><input type="range" class="slider" min="1" max="20" value="8" oninput="this.nextElementSibling.textContent=this.value+'req'"/><span class="slider-val">8req</span></div>
+          </div>
+          <div>
+            <div class="form-group"><label class="form-label">Proxy Pool Endpoint</label><input type="text" class="form-input" value="https://proxy.oddsoracle.ai/pool"/></div>
+            <div class="form-group"><label class="form-label">User Agent String</label><input type="text" class="form-input" value="Mozilla/5.0 (compatible; OddsBot/4.2)"/></div>
+            <div class="flex gap-16 mt-12">
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><div class="toggle on" onclick="this.classList.toggle('on')"></div> Headless Mode</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><div class="toggle on" onclick="this.classList.toggle('on')"></div> Auto-retry on fail</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ AI MODEL -->
+    <div class="page" id="page-aimodel">
+      <div class="flex-between mb-20">
+        <div>
+          <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">AI Prediction Model</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Configure signal weights, model parameters, and Claude prompt template</div>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Retraining model...','info')"><i class="fa fa-sync"></i> Retrain Model</button>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Changes saved!','success')"><i class="fa fa-save"></i> Save Changes</button>
+        </div>
+      </div>
+      <div class="grid-2" style="gap:20px">
+        <!-- Signal weights -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">SIGNAL WEIGHTS</span><span class="editable-badge">EDITABLE</span></div>
+          <div id="signalSliders"></div>
+          <div class="glow-line"></div>
+          <div style="font-size:12px;color:var(--text2);display:flex;justify-content:space-between">
+            <span>Total weight:</span>
+            <span class="mono text-cyan" id="totalWeight">100%</span>
+          </div>
+        </div>
+        <!-- Model params -->
+        <div>
+          <div class="card mb-16">
+            <div class="card-header"><span class="card-title">MODEL PARAMETERS</span></div>
+            <div class="form-group"><label class="form-label">Min Confidence Threshold</label>
+              <div class="slider-row" style="margin:0"><input type="range" class="slider" min="50" max="95" value="68" oninput="this.nextElementSibling.textContent=this.value+'%'"/><span class="slider-val">68%</span></div>
+            </div>
+            <div class="form-group"><label class="form-label">Value Bet Edge Threshold</label>
+              <div class="slider-row" style="margin:0"><input type="range" class="slider" min="1" max="15" value="3" oninput="this.nextElementSibling.textContent='+'+this.value+'%'"/><span class="slider-val">+3%</span></div>
+            </div>
+            <div class="form-group"><label class="form-label">High-Confidence Floor</label>
+              <div class="slider-row" style="margin:0"><input type="range" class="slider" min="60" max="95" value="80" oninput="this.nextElementSibling.textContent=this.value+'%'"/><span class="slider-val">80%</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">CLAUDE PROMPT TEMPLATE</span></div>
+            <textarea class="form-input textarea-dark" rows="8">You are a sharp sports betting analyst. Given the following event data and signal scores, provide a concise 3-sentence analysis. Evaluate: {HOME_TEAM} vs {AWAY_TEAM} in {LEAGUE}.
+
+Signal scores: Form={FORM}, H2H={H2H}, Home={HOME_ADV}, Sharp={SHARP}, Injuries={INJURIES}, Public={PUBLIC}
+
+Best odds: {ODDS_DATA}
+
+Provide: 1) Key factor driving your pick 2) Primary risk factor 3) Clear recommendation: BET/MONITOR/PASS</textarea>
+            <button class="btn btn-ghost btn-sm mt-8"><i class="fa fa-magic"></i> Test Prompt</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ SPORTSBOOKS -->
+    <div class="page" id="page-sportsbooks">
+      <div class="flex-between mb-16">
+        <div><div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">Sportsbook Registry</div></div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('addBookModal').classList.remove('hidden')"><i class="fa fa-plus"></i> Add Sportsbook</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sportsbook</th><th>Status</th><th>Markets</th><th>Latency</th><th>Uptime</th><th>Last Scan</th><th>Actions</th></tr></thead>
+            <tbody id="sbTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Add modal -->
+      <div class="modal-overlay hidden" id="addBookModal" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header"><h3>Add New Sportsbook</h3><button class="modal-close" onclick="document.getElementById('addBookModal').classList.add('hidden')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Sportsbook Name</label><input type="text" class="form-input" placeholder="e.g. DraftKings"/></div>
+            <div class="form-group"><label class="form-label">Base URL</label><input type="text" class="form-input" placeholder="https://www.draftkings.com/"/></div>
+            <div class="form-group"><label class="form-label">API Endpoint (if available)</label><input type="text" class="form-input" placeholder="https://api.draftkings.com/..."/></div>
+            <div class="form-group"><label class="form-label">Crawl Selector</label><input type="text" class="form-input" placeholder=".odds-cell .price"/></div>
+            <div class="flex gap-8">
+              <button class="btn btn-primary w-full" onclick="document.getElementById('addBookModal').classList.add('hidden');showToast('Sportsbook added!','success')"><i class="fa fa-plus"></i> Add Book</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('addBookModal').classList.add('hidden')">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ PREDICTIONS -->
+    <div class="page" id="page-predictions">
+      <div class="flex-between mb-16">
+        <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">Prediction Log</div>
+        <button class="btn btn-ghost btn-sm"><i class="fa fa-download"></i> Export CSV</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap" style="max-height:520px;overflow-y:auto">
+          <table>
+            <thead><tr><th>Event</th><th>Sport</th><th>Prediction</th><th>Confidence</th><th>Best Odds</th><th>Edge</th><th>Result</th><th>P&L</th></tr></thead>
+            <tbody id="predTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="flex-between mb-16">
+        <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">Alert Management</div>
+        <button class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Add Alert Rule</button>
+      </div>
+      <div class="mb-20">
+        <div class="section-label">ACTIVE ALERTS</div>
+        <div class="alert-card">
+          <div class="flex-between mb-8">
+            <div class="flex flex-center gap-8"><i class="fa fa-exclamation-triangle" style="color:var(--orange)"></i><strong>High Latency: BetMGM Crawler</strong></div>
+            <div class="flex gap-8">
+              <span class="badge b-orange">WARNING</span>
+              <button class="btn btn-ghost btn-sm" onclick="this.closest('.alert-card').style.opacity='0.4'">Acknowledge</button>
+              <button class="btn btn-danger btn-sm" onclick="this.closest('.alert-card').remove()">Dismiss</button>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--text2)">BetMGM crawler is responding at 3,840ms — above the 2,000ms threshold. Check proxy connection.</p>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px"><i class="fa fa-clock"></i> Triggered 14 min ago</div>
+        </div>
+        <div class="alert-card warn">
+          <div class="flex-between mb-8">
+            <div class="flex flex-center gap-8"><i class="fa fa-bolt" style="color:var(--yellow)"></i><strong>Steam Alert: Bayern Munich Line Moving</strong></div>
+            <div class="flex gap-8">
+              <span class="badge b-yellow">MARKET</span>
+              <button class="btn btn-ghost btn-sm" onclick="this.closest('.alert-card').style.opacity='0.4'">Acknowledge</button>
+              <button class="btn btn-danger btn-sm" onclick="this.closest('.alert-card').remove()">Dismiss</button>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--text2)">Bayern Munich odds moved from +220 to +185 across 6 books in the last 12 minutes. Sharp money detected.</p>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px"><i class="fa fa-clock"></i> Triggered 6 min ago</div>
+        </div>
+        <div class="alert-card info">
+          <div class="flex-between mb-8">
+            <div class="flex flex-center gap-8"><i class="fa fa-info-circle" style="color:var(--cyan)"></i><strong>New Value Bet Detected: Man City +7.2% Edge</strong></div>
+            <div class="flex gap-8">
+              <span class="badge b-cyan">INFO</span>
+              <button class="btn btn-ghost btn-sm" onclick="this.closest('.alert-card').style.opacity='0.4'">Acknowledge</button>
+              <button class="btn btn-danger btn-sm" onclick="this.closest('.alert-card').remove()">Dismiss</button>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--text2)">Man City vs Arsenal — AI model confidence 84%, edge +7.2% vs market. Best odds 2.25 @ FanDuel.</p>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px"><i class="fa fa-clock"></i> Triggered 2 min ago</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">ALERT RULES</span></div>
+        <div id="alertRules"></div>
+      </div>
+      <div class="card mt-16">
+        <div class="card-header"><span class="card-title">NOTIFICATION CHANNELS</span></div>
+        <div class="grid-2">
+          <div class="flex-between" style="padding:12px;background:var(--bg4);border-radius:8px;border:1px solid var(--border)">
+            <div class="flex flex-center gap-10"><i class="fa fa-envelope" style="color:var(--cyan)"></i><div><div style="font-size:13px;font-weight:600">Email Notifications</div><div style="font-size:11px;color:var(--text3)">admin@oddsoracle.ai</div></div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="flex-between" style="padding:12px;background:var(--bg4);border-radius:8px;border:1px solid var(--border)">
+            <div class="flex flex-center gap-10"><i class="fa fa-comment" style="color:var(--green)"></i><div><div style="font-size:13px;font-weight:600">Slack Notifications</div><div style="font-size:11px;color:var(--text3)">#oddsoracle-alerts</div></div></div>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ USERS -->
+    <div class="page" id="page-users">
+      <div class="flex-between mb-16">
+        <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">User Management</div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('inviteModal').classList.remove('hidden')"><i class="fa fa-user-plus"></i> Invite User</button>
+      </div>
+      <div class="card">
+        <div class="flex gap-10 mb-16">
+          <input type="text" class="form-input" placeholder="🔍 Search users..." style="max-width:280px"/>
+          <select class="form-input form-select" style="width:140px"><option>All Roles</option><option>Admin</option><option>Premium</option><option>Free</option></select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="usersTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-overlay hidden" id="inviteModal" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header"><h3>Invite User</h3><button class="modal-close" onclick="document.getElementById('inviteModal').classList.add('hidden')">✕</button></div>
+          <div class="modal-body">
+            <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-input" placeholder="user@example.com"/></div>
+            <div class="form-group"><label class="form-label">Role</label><select class="form-input form-select"><option>Premium Member</option><option>Free Member</option><option>Analyst</option><option>Admin</option></select></div>
+            <div class="form-group"><label class="form-label">Personal Message (optional)</label><textarea class="form-input" rows="3" placeholder="Welcome to OddsOracle..."></textarea></div>
+            <button class="btn btn-primary w-full" onclick="document.getElementById('inviteModal').classList.add('hidden');showToast('Invitation sent!','success')"><i class="fa fa-paper-plane"></i> Send Invitation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="grid-2" style="gap:20px">
+        <div>
+          <div class="card mb-16">
+            <div class="card-header"><span class="card-title">GENERAL CONFIG</span></div>
+            <div class="form-group"><label class="form-label">Platform Name</label><input type="text" class="form-input" value="OddsOracle Intelligence"/></div>
+            <div class="form-group"><label class="form-label">Admin Email</label><input type="email" class="form-input" value="admin@oddsoracle.ai"/></div>
+            <div class="form-group"><label class="form-label">Timezone</label><select class="form-input form-select"><option>UTC</option><option>WAT (West Africa)</option><option>EAT (East Africa)</option><option>EST</option></select></div>
+            <button class="btn btn-primary" onclick="showToast('Settings saved!','success')"><i class="fa fa-save"></i> Save</button>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">API KEYS</span></div>
+            <div class="form-group"><label class="form-label">Anthropic API Key (Claude)</label><div class="flex gap-8"><input type="password" class="form-input flex-1" value="sk-ant-api03-xxxxxxxxxxxx"/><button class="btn btn-ghost btn-sm" onclick="this.previousElementSibling.type=this.previousElementSibling.type==='password'?'text':'password'"><i class="fa fa-eye"></i></button></div></div>
+            <div class="form-group"><label class="form-label">OddsAPI Key</label><input type="password" class="form-input" value="abc123xxxxxxxxxxxxxxxx"/></div>
+            <div class="form-group"><label class="form-label">Slack Webhook URL</label><input type="password" class="form-input" value="https://hooks.slack.com/..."/></div>
+          </div>
+        </div>
+        <div>
+          <div class="card mb-16">
+            <div class="card-header"><span class="card-title">SYSTEM HEALTH</span></div>
+            <div class="health-item"><div class="health-label"><span>CPU Usage</span><span class="health-val text-cyan" id="cpuVal">—</span></div><div class="prog-track"><div class="prog-fill p-cyan" id="cpuBar" style="width:0%"></div></div></div>
+            <div class="health-item"><div class="health-label"><span>RAM Usage</span><span class="health-val text-green" id="ramVal">—</span></div><div class="prog-track"><div class="prog-fill p-green" id="ramBar" style="width:0%"></div></div></div>
+            <div class="health-item"><div class="health-label"><span>Disk Usage</span><span class="health-val text-orange" id="diskVal">—</span></div><div class="prog-track"><div class="prog-fill p-orange" id="diskBar" style="width:0%"></div></div></div>
+            <div class="health-item"><div class="health-label"><span>Network (MB/s)</span><span class="health-val text-cyan" id="netVal">—</span></div><div class="prog-track"><div class="prog-fill p-cyan" id="netBar" style="width:0%"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">DATA RETENTION</span></div>
+            <div class="form-group"><label class="form-label">Prediction Log Retention</label><select class="form-input form-select"><option>90 days</option><option>180 days</option><option>365 days</option><option>Forever</option></select></div>
+            <div class="form-group"><label class="form-label">Crawler Log Retention</label><select class="form-input form-select"><option>7 days</option><option>30 days</option><option>90 days</option></select></div>
+            <div class="flex gap-12 mt-12">
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><div class="toggle on" onclick="this.classList.toggle('on')"></div> Auto-backup daily</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><div class="toggle on" onclick="this.classList.toggle('on')"></div> Compress old logs</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ LOGS -->
+    <div class="page" id="page-logs">
+      <div class="flex-between mb-16">
+        <div style="font-size:1.3rem;font-family:'Rajdhani',sans-serif;font-weight:700">System Logs</div>
+        <div class="flex gap-8">
+          <select class="form-input form-select btn-sm" style="width:100px"><option>ALL</option><option>INFO</option><option>WARN</option><option>ERROR</option></select>
+          <button class="btn btn-ghost btn-sm"><i class="fa fa-download"></i> Export</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearLogs()"><i class="fa fa-trash"></i> Clear</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="max-height:560px;overflow-y:auto" id="logContainer"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="adminToast" style="position:fixed;bottom:20px;right:20px;z-index:9999;display:none;background:var(--bg3);border:1px solid var(--cyan-border);border-radius:10px;padding:12px 16px;font-size:13px;box-shadow:0 0 20px rgba(0,212,255,0.2);animation:slideUp 0.3s ease"></div>
+
+<script>
+// ── Navigation ──
+const PAGES = { dashboard:'Dashboard', analytics:'Analytics', crawlers:'Crawlers', aimodel:'AI Model', sportsbooks:'Sportsbooks', predictions:'Predictions', alerts:'Alerts', users:'Users', settings:'Settings', logs:'System Logs' };
+const BREADCRUMBS = { dashboard:'OddsOracle › System › Dashboard', analytics:'OddsOracle › Analytics', crawlers:'OddsOracle › System › Crawlers', aimodel:'OddsOracle › System › AI Model', sportsbooks:'OddsOracle › System › Sportsbooks', predictions:'OddsOracle › Operations › Predictions', alerts:'OddsOracle › Operations › Alerts', users:'OddsOracle › Operations › Users', settings:'OddsOracle › Config › Settings', logs:'OddsOracle › Config › System Logs' };
+
+function goto(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick')?.includes(page)) n.classList.add('active'); });
+  document.getElementById('topbarTitle').textContent = PAGES[page];
+  document.getElementById('topbarBreadcrumb').textContent = BREADCRUMBS[page];
+}
+
+// ── Clock ──
+setInterval(() => {
+  document.getElementById('adminClock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+}, 1000);
+document.getElementById('adminClock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+// ── Toast ──
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('adminToast');
+  const colors = { success: 'var(--green)', error: 'var(--red)', info: 'var(--cyan)', warn: 'var(--yellow)' };
+  const icons = { success: '✓', error: '✕', info: 'ℹ', warn: '⚠' };
+  t.innerHTML = `<span style="color:${colors[type]}">${icons[type]}</span>  ${msg}`;
+  t.style.borderColor = colors[type];
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ── Dashboard KPIs ──
+document.getElementById('kpiScans').textContent = (1247 + Math.floor(Math.random()*50)).toLocaleString();
+document.getElementById('kpiValueBets').textContent = 12 + Math.floor(Math.random()*4);
+document.getElementById('kpiUsers').textContent = (12284 + Math.floor(Math.random()*100)).toLocaleString();
+
+// ── Charts ──
+const chartOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false } },
+  scales: { x: { grid: { color: 'rgba(30,45,61,0.5)' }, ticks: { color: '#4b5563', font: { size: 9 } } }, y: { grid: { color: 'rgba(30,45,61,0.5)' }, ticks: { color: '#4b5563', font: { size: 9 } } } }
+};
+const days14 = Array.from({length:14}, (_,i) => { const d = new Date(); d.setDate(d.getDate()-13+i); return d.toLocaleDateString('en',{month:'short',day:'numeric'}); });
+
+new Chart(document.getElementById('scanChart'), {
+  type: 'line',
+  data: { labels: days14, datasets: [{ data: days14.map(() => 800+Math.random()*600), borderColor: '#00d4ff', backgroundColor: 'rgba(0,212,255,0.06)', fill: true, tension: 0.4, pointRadius: 2, pointBackgroundColor: '#00d4ff' }] },
+  options: chartOpts
+});
+
+new Chart(document.getElementById('gaugeChart'), {
+  type: 'doughnut',
+  data: { datasets: [{ data: [78.4, 21.6], backgroundColor: ['#00ff88', '#1a2535'], borderWidth: 0, circumference: 240, rotation: -120 }] },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+});
+
+// Text overlay for gauge
+Chart.register({ id: 'gaugeText', afterDraw(chart) {
+  if (chart.canvas.id !== 'gaugeChart') return;
+  const {ctx, width, height} = chart;
+  ctx.save();
+  ctx.font = 'bold 28px JetBrains Mono, monospace';
+  ctx.fillStyle = '#00ff88';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('78.4%', width/2, height/2 + 10);
+  ctx.font = '11px Inter';
+  ctx.fillStyle = '#4b5563';
+  ctx.fillText('ACCURACY', width/2, height/2 + 32);
+  ctx.restore();
+}});
+
+new Chart(document.getElementById('sportChart'), {
+  type: 'bar',
+  data: {
+    labels: ['⚽','🎾','🏀','🏈','🥊','🎯','⚾','🏸','🏏','🏎️','🏐','🤽','⛳','🚴','💥'],
+    datasets: [{
+      label: 'Accuracy %',
+      data: [81.2, 83.0, 76.5, 74.8, 77.4, 80.1, 72.6, 79.3, 78.5, 75.2, 76.8, 73.9, 71.4, 74.1, 68.8],
+      backgroundColor: [
+        'rgba(0,212,255,0.55)','rgba(0,255,136,0.55)','rgba(124,58,237,0.55)','rgba(251,191,36,0.55)',
+        'rgba(255,107,53,0.55)','rgba(0,212,255,0.55)','rgba(0,255,136,0.55)','rgba(124,58,237,0.55)',
+        'rgba(0,255,136,0.55)','rgba(255,107,53,0.55)','rgba(0,212,255,0.55)','rgba(251,191,36,0.55)',
+        'rgba(251,191,36,0.55)','rgba(0,212,255,0.55)','rgba(255,107,53,0.55)'
+      ],
+      borderColor: [
+        '#00d4ff','#00ff88','#7c3aed','#fbbf24','#ff6b35','#00d4ff','#00ff88','#7c3aed',
+        '#00ff88','#ff6b35','#00d4ff','#fbbf24','#fbbf24','#00d4ff','#ff6b35'
+      ],
+      borderWidth: 1, borderRadius: 4
+    }]
+  },
+  options: { ...chartOpts, scales: { ...chartOpts.scales, y: { ...chartOpts.scales.y, min: 50, max: 100 } } }
+});
+
+new Chart(document.getElementById('bookChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['DraftKings','FanDuel','BetMGM','Caesars','bet365','PointsBet','Unibet','W.Hill','Bet9ja','Betwinner','Bc.game','Stake','Betano','1xBet'],
+    datasets: [{
+      data: [7,8,6,6,10,4,6,7,9,12,5,6,7,17],
+      backgroundColor: ['rgba(26,138,0,0.75)','rgba(20,147,255,0.75)','rgba(193,154,41,0.75)','rgba(184,134,11,0.75)','rgba(0,92,46,0.75)','rgba(227,24,55,0.75)','rgba(0,124,65,0.75)','rgba(0,74,151,0.75)','rgba(0,102,0,0.75)','rgba(255,102,0,0.75)','rgba(155,89,182,0.75)','rgba(0,231,1,0.75)','rgba(212,0,28,0.75)','rgba(0,116,194,0.75)'],
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false, cutout: '40%', plugins: { legend: { position: 'right', labels: { color: '#64748b', font: { size: 9 }, boxWidth: 10, padding: 6 } } } }
+});
+
+// ── Crawler status grid (dashboard) ──
+const BOOKS = [
+  'DraftKings','FanDuel','BetMGM','Caesars','bet365','PointsBet','Unibet','W.Hill',
+  'Bet9ja','Betwinner','Bc.game','Stake','Betano','1xBet',
+  '22bet','Betking','Msport','Afropari','Helabet'
+];
+const BOOK_INFO = {
+  'DraftKings': { icon:'🦅', region:'USA',          color:'#1a8a00' },
+  'FanDuel':    { icon:'🎯', region:'USA',          color:'#1493ff' },
+  'BetMGM':     { icon:'🦁', region:'USA',          color:'#c19a29' },
+  'Caesars':    { icon:'👑', region:'USA',          color:'#b8860b' },
+  'bet365':     { icon:'⚽', region:'Global',       color:'#005c2e' },
+  'PointsBet':  { icon:'📍', region:'USA/AUS',      color:'#e31837' },
+  'Unibet':     { icon:'🎰', region:'Europe',       color:'#007c41' },
+  'W.Hill':     { icon:'🏇', region:'UK',           color:'#004a97' },
+  'Bet9ja':     { icon:'🇳🇬', region:'Nigeria',     color:'#006600' },
+  'Betwinner':  { icon:'🏆', region:'Africa/Intl',  color:'#ff6600' },
+  'Bc.game':    { icon:'💎', region:'Crypto',       color:'#9b59b6' },
+  'Stake':      { icon:'🚀', region:'Crypto',       color:'#00e701' },
+  'Betano':     { icon:'🔥', region:'Africa/EU',    color:'#d4001c' },
+  '1xBet':      { icon:'1️⃣', region:'Africa/Intl',  color:'#0074c2' },
+  '22bet':      { icon:'🎰', region:'Africa/Global', color:'#f05a22' },
+  'Betking':    { icon:'🏅', region:'Nigeria/Africa',color:'#1a9e2f' },
+  'Msport':     { icon:'🏟️', region:'Nigeria',       color:'#0a3d8f' },
+  'Afropari':   { icon:'🌍', region:'Africa',        color:'#e63946' },
+  'Helabet':    { icon:'⚡', region:'Africa/EU',     color:'#00b4d8' },
+};
+// ── Crawler status grid (dashboard) — 19 books ──
+const crawlerGrid = document.getElementById('crawlerStatusGrid');
+crawlerGrid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(88px,1fr))';
+BOOKS.forEach(b => {
+  const latency = 700 + Math.floor(Math.random()*2300);
+  const isOk = latency < 2100;
+  const info = BOOK_INFO[b] || { icon:'🎲', region:'Global', color:'#00d4ff' };
+  crawlerGrid.innerHTML += `
+    <div style="background:var(--bg4);border:1px solid ${isOk?'var(--border)':'rgba(255,107,53,0.3)'};border-radius:8px;padding:8px;font-size:11px;cursor:default;transition:all 0.2s"
+      onmouseover="this.style.borderColor='${info.color}';this.style.background='rgba(${info.color.slice(1).match(/../g).map(h=>parseInt(h,16)).join(',')},0.08)'"
+      onmouseout="this.style.borderColor='${isOk?'var(--border)':'rgba(255,107,53,0.3)'}';this.style.background='var(--bg4)'">
+      <div style="font-size:15px;margin-bottom:3px">${info.icon}</div>
+      <div style="font-weight:700;font-size:11px;margin-bottom:2px;color:var(--text)">${b}</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:3px">${info.region}</div>
+      <div style="color:${isOk?'var(--green)':'var(--orange)'};font-size:9px;font-weight:700">● ${isOk?'LIVE':'WARN'}</div>
+      <div class="mono" style="color:var(--text3);font-size:9px;margin-top:2px">${latency}ms</div>
+    </div>`;
+});
+
+// ── Crawler cards (crawlers page) — 19 books ──
+const crawlerCards = document.getElementById('crawlerCards');
+crawlerCards.style.gridTemplateColumns = 'repeat(auto-fill,minmax(180px,1fr))';
+BOOKS.forEach((b, i) => {
+  const latency = 700 + Math.floor(Math.random()*2300);
+  const uptime = (94 + Math.random()*5.5).toFixed(1);
+  const isOk = latency < 2100;
+  const info = BOOK_INFO[b] || { icon:'🎲', region:'Global', color:'#00d4ff' };
+  const isPaused = i === 2; // BetMGM simulated as paused
+  const div = document.createElement('div');
+  div.className = 'crawler-card' + (isPaused ? ' paused' : '');
+  div.innerHTML = `
+    <div class="flex-between mb-8">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">${info.icon}</span>
+        <div>
+          <div class="crawler-name" style="font-size:13px">${b}</div>
+          <div style="font-size:10px;color:var(--text3)">${info.region}</div>
+        </div>
+      </div>
+      <div class="crawler-status">
+        <span style="width:7px;height:7px;border-radius:50%;background:${isPaused?'var(--orange)':isOk?'var(--green)':'var(--yellow)'};display:inline-block;box-shadow:0 0 6px ${isPaused?'var(--orange)':isOk?'var(--green)':'var(--yellow)'}"></span>
+        <span style="font-size:10px;font-weight:700;color:${isPaused?'var(--orange)':isOk?'var(--green)':'var(--yellow)'}">${isPaused?'PAUSED':isOk?'LIVE':'WARN'}</span>
+      </div>
+    </div>
+    <div class="flex gap-8 mb-8" style="flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--text3)">Latency: <span class="mono ${isOk?'text-green':'text-orange'}" style="font-size:10px">${latency}ms</span></span>
+      <span style="font-size:10px;color:var(--text3)">Uptime: <span class="mono text-cyan" style="font-size:10px">${uptime}%</span></span>
+    </div>
+    <div class="prog-track mb-8"><div class="prog-fill ${isOk?'p-green':'p-orange'}" style="width:${uptime}%"></div></div>
+    <div class="flex gap-6">
+      <button class="btn btn-ghost btn-sm" onclick="showToast('${b} paused','warn')" title="Pause"><i class="fa fa-pause"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="showToast('${b} restarted ✓','success')" title="Restart"><i class="fa fa-redo"></i></button>
+      <button class="btn btn-ghost btn-sm" title="Config"><i class="fa fa-cog"></i></button>
+    </div>`;
+  crawlerCards.appendChild(div);
+});
+
+function pauseAll() { showToast('All crawlers paused','warn'); }
+function startAll() { showToast('All crawlers started','success'); }
+
+// ── Signal sliders ──
+const SIGNALS = [['Recent Form (5 games)', 22], ['Head-to-Head Record', 18], ['Home / Away Advantage', 16], ['Sharp Line Movement', 20], ['Injury Report', 14], ['Public Money Fade', 10]];
+const signalEl = document.getElementById('signalSliders');
+SIGNALS.forEach(([name, val]) => {
+  signalEl.innerHTML += `<div class="slider-row">
+    <span class="slider-label" style="font-size:12px">${name}</span>
+    <input type="range" class="slider" min="0" max="50" value="${val}" oninput="updateTotal()"/>
+    <span class="slider-val">${val}%</span>
+  </div>`;
+});
+function updateTotal() {
+  const sliders = document.querySelectorAll('#signalSliders .slider');
+  let total = 0;
+  sliders.forEach(s => {
+    total += parseInt(s.value);
+    s.nextElementSibling.textContent = s.value + '%';
+  });
+  const el = document.getElementById('totalWeight');
+  el.textContent = total + '%';
+  el.style.color = total === 100 ? 'var(--green)' : total > 100 ? 'var(--red)' : 'var(--yellow)';
+}
+document.querySelectorAll('#signalSliders .slider').forEach(s => s.addEventListener('input', updateTotal));
+
+// ── Sportsbooks table ──
+const sbData = BOOKS.map((b, i) => {
+  const info = BOOK_INFO[b] || { icon:'🎲', region:'Global' };
+  const baseMarkets = { 'DraftKings':847,'FanDuel':912,'BetMGM':763,'Caesars':689,'bet365':1204,'PointsBet':534,'Unibet':678,'W.Hill':891,'Bet9ja':1089,'Betwinner':1432,'Bc.game':623,'Stake':741,'Betano':892,'1xBet':2104 };
+  return {
+    name: b, icon: info.icon, region: info.region,
+    live: i !== 2,
+    markets: baseMarkets[b] || 500 + Math.floor(Math.random()*600),
+    latency: 700 + Math.floor(Math.random()*2300),
+    uptime: (93 + Math.random()*6.5).toFixed(1),
+    lastScan: `${Math.floor(Math.random()*4)}m ago`
+  };
+});
+const sbTable = document.getElementById('sbTable');
+sbData.forEach(s => {
+  const isWarn = s.latency >= 2100;
+  sbTable.innerHTML += `<tr>
+    <td>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px">${s.icon}</span>
+        <div>
+          <div style="font-weight:700;font-size:12px">${s.name}</div>
+          <div style="font-size:10px;color:var(--text3)">${s.region}</div>
+        </div>
+      </div>
+    </td>
+    <td><span class="badge ${s.live?'b-green':'b-orange'}">${s.live?'● LIVE':'● PAUSED'}</span></td>
+    <td class="mono" style="font-size:12px">${s.markets.toLocaleString()}</td>
+    <td class="mono ${isWarn?'text-orange':'text-green'}" style="font-size:12px">${s.latency}ms</td>
+    <td><div style="display:flex;align-items:center;gap:8px"><span class="mono text-cyan" style="font-size:12px">${s.uptime}%</span><div class="prog-track" style="width:60px;height:4px"><div class="prog-fill p-cyan" style="width:${s.uptime}%"></div></div></div></td>
+    <td style="color:var(--text3);font-size:11px">${s.lastScan}</td>
+    <td><div class="flex gap-6"><button class="btn btn-ghost btn-sm" onclick="showToast('Editing ${s.name}','info')"><i class="fa fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fa fa-trash"></i></button></div></td>
+  </tr>`;
+});
+
+// ── Predictions table ── Each event is bound to its correct sport, league & prediction ──
+const PREDICTION_EVENTS = [
+  // ── ⚽ Soccer / Football ──
+  { sport:'⚽ Soccer',    league:'Premier League',          home:'Man City',        away:'Arsenal',           pred:'Man City Win',         odds:2.10, conf:84, edge:7.2, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'La Liga',                 home:'Real Madrid',     away:'Barcelona',          pred:'Real Madrid Win',      odds:2.25, conf:81, edge:6.1, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'Champions League',        home:'Bayern Munich',   away:'PSG',                pred:'Bayern Munich Win',    odds:1.95, conf:79, edge:5.4, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'Serie A',                 home:'Inter Milan',     away:'Juventus',           pred:'Inter Milan Win',      odds:2.10, conf:77, edge:4.8, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'Premier League',          home:'Liverpool',       away:'Chelsea',            pred:'Liverpool Win',        odds:1.90, conf:82, edge:6.8, result:'PENDING' },
+  { sport:'⚽ Soccer',    league:'Premier League',          home:'Man United',      away:'Tottenham',          pred:'Draw',                 odds:3.20, conf:68, edge:3.2, result:'PENDING' },
+  { sport:'⚽ Soccer',    league:'Serie A',                 home:'Napoli',          away:'AC Milan',           pred:'Napoli Win',           odds:2.30, conf:74, edge:4.1, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'La Liga',                 home:'Atletico Madrid', away:'Sevilla',            pred:'Atletico Win',         odds:1.85, conf:78, edge:5.0, result:'LOSS'    },
+  { sport:'⚽ Soccer',    league:'Bundesliga',              home:'Dortmund',        away:'RB Leipzig',         pred:'Dortmund Win',         odds:2.05, conf:76, edge:4.6, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'Ligue 1',                 home:'PSG',             away:'Marseille',          pred:'PSG Win',              odds:1.65, conf:85, edge:7.9, result:'WIN'     },
+  { sport:'⚽ Soccer',    league:'Eredivisie',              home:'Ajax',            away:'PSV Eindhoven',      pred:'Ajax Win',             odds:2.10, conf:72, edge:3.8, result:'LOSS'    },
+  { sport:'⚽ Soccer',    league:'NPFL',                   home:'Enyimba FC',      away:'Kano Pillars',       pred:'Enyimba Win',          odds:2.15, conf:70, edge:3.5, result:'PENDING' },
+
+  // ── 🏀 NBA Basketball ──
+  { sport:'🏀 NBA',       league:'NBA Regular Season',      home:'LA Lakers',       away:'Boston Celtics',     pred:'Lakers Win',           odds:1.85, conf:76, edge:4.4, result:'WIN'     },
+  { sport:'🏀 NBA',       league:'NBA Regular Season',      home:'Golden State',    away:'Miami Heat',         pred:'Golden State Win',     odds:2.05, conf:73, edge:3.9, result:'WIN'     },
+  { sport:'🏀 NBA',       league:'NBA Regular Season',      home:'Milwaukee Bucks', away:'New York Knicks',    pred:'Bucks Win',            odds:1.90, conf:78, edge:5.1, result:'LOSS'    },
+  { sport:'🏀 NBA',       league:'NBA Regular Season',      home:'Denver Nuggets',  away:'Phoenix Suns',       pred:'Nuggets Win',          odds:2.10, conf:74, edge:4.2, result:'WIN'     },
+  { sport:'🏀 NBA',       league:'NBA Playoffs',            home:'Boston Celtics',  away:'Cleveland Cavs',     pred:'Celtics Win',          odds:1.72, conf:81, edge:6.3, result:'PENDING' },
+
+  // ── 🏈 NFL ──
+  { sport:'🏈 NFL',       league:'NFL Week 18',             home:'Kansas City Chiefs',away:'Buffalo Bills',    pred:'Chiefs Win',           odds:1.92, conf:79, edge:5.5, result:'WIN'     },
+  { sport:'🏈 NFL',       league:'NFL Playoffs',            home:'Philadelphia Eagles',away:'Dallas Cowboys',  pred:'Eagles Win',           odds:2.10, conf:75, edge:4.3, result:'WIN'     },
+  { sport:'🏈 NFL',       league:'NFL Regular Season',      home:'Green Bay Packers',away:'Chicago Bears',    pred:'Packers Win',          odds:1.85, conf:77, edge:4.9, result:'LOSS'    },
+
+  // ── 🎾 Tennis ──
+  { sport:'🎾 Tennis',    league:'ATP Masters 1000',        home:'Novak Djokovic',  away:'Carlos Alcaraz',     pred:'Djokovic Win',         odds:1.62, conf:80, edge:5.8, result:'WIN'     },
+  { sport:'🎾 Tennis',    league:'WTA Finals',              home:'Iga Swiatek',     away:'Aryna Sabalenka',    pred:'Swiatek Win',          odds:1.55, conf:82, edge:6.4, result:'WIN'     },
+  { sport:'🎾 Tennis',    league:'ATP 500',                 home:'Daniil Medvedev', away:'Stefanos Tsitsipas', pred:'Medvedev Win',         odds:1.75, conf:74, edge:4.0, result:'PENDING' },
+
+  // ── 🥊 Boxing ──
+  { sport:'🥊 Boxing',    league:'WBC Heavyweight',         home:'Tyson Fury',      away:'Anthony Joshua',     pred:'Fury Win',             odds:1.85, conf:78, edge:5.2, result:'WIN'     },
+  { sport:'🥊 Boxing',    league:'WBC Super Middleweight',  home:'Canelo Alvarez',  away:'David Benavidez',    pred:'Canelo Win',           odds:1.72, conf:75, edge:4.5, result:'PENDING' },
+
+  // ── 🎯 Darts ──
+  { sport:'🎯 Darts',     league:'PDC World Championship',  home:'Luke Littler',    away:'Michael van Gerwen', pred:'Littler Win',          odds:1.72, conf:76, edge:4.7, result:'WIN'     },
+  { sport:'🎯 Darts',     league:'Premier League Darts',    home:'Gerwyn Price',    away:'Peter Wright',       pred:'Price Win',            odds:1.90, conf:70, edge:3.3, result:'LOSS'    },
+
+  // ── ⚾ Baseball ──
+  { sport:'⚾ Baseball',  league:'MLB Regular Season',      home:'NY Yankees',      away:'LA Dodgers',         pred:'Yankees Win',          odds:1.90, conf:72, edge:3.6, result:'WIN'     },
+  { sport:'⚾ Baseball',  league:'MLB Regular Season',      home:'Houston Astros',  away:'Chicago Cubs',       pred:'Astros Win',           odds:1.85, conf:74, edge:4.0, result:'LOSS'    },
+
+  // ── 🏸 Badminton ──
+  { sport:'🏸 Badminton', league:'BWF World Tour Finals',   home:'Viktor Axelsen',  away:'Shi Yuqi',           pred:'Axelsen Win',          odds:1.60, conf:83, edge:6.7, result:'WIN'     },
+  { sport:'🏸 Badminton', league:'BWF Super 1000',          home:'Loh Kean Yew',    away:'Anthony Ginting',    pred:'Loh Kean Yew Win',     odds:2.10, conf:70, edge:3.4, result:'PENDING' },
+
+  // ── 🏏 Cricket ──
+  { sport:'🏏 Cricket',   league:'ICC T20 World Cup',       home:'India',           away:'Australia',          pred:'India Win',            odds:1.75, conf:80, edge:5.9, result:'WIN'     },
+  { sport:'🏏 Cricket',   league:'IPL 2025',                home:'Mumbai Indians',  away:'Chennai Super Kings',pred:'Mumbai Indians Win',   odds:1.80, conf:76, edge:4.8, result:'WIN'     },
+  { sport:'🏏 Cricket',   league:'The Ashes',               home:'England',         away:'Australia',          pred:'England Win',          odds:2.20, conf:69, edge:3.1, result:'LOSS'    },
+
+  // ── 🏎️ Formula 1 ──
+  { sport:'🏎️ F1',        league:'F1 Monaco Grand Prix H2H',home:'Max Verstappen', away:'Lewis Hamilton',     pred:'Verstappen Win',       odds:1.65, conf:82, edge:6.5, result:'WIN'     },
+  { sport:'🏎️ F1',        league:'F1 British Grand Prix H2H',home:'Lando Norris',  away:'Charles Leclerc',    pred:'Norris Win',           odds:1.85, conf:73, edge:4.1, result:'PENDING' },
+
+  // ── 🏐 Volleyball ──
+  { sport:'🏐 Volleyball', league:'FIVB Nations League',    home:'Brazil',          away:'Poland',             pred:'Brazil Win',           odds:1.70, conf:79, edge:5.3, result:'WIN'     },
+  { sport:'🏐 Volleyball', league:'CEV Champions League',   home:'Trentino',        away:'Civitanova',         pred:'Trentino Win',         odds:2.05, conf:68, edge:3.0, result:'LOSS'    },
+
+  // ── 🤽 Water Polo ──
+  { sport:'🤽 Water Polo', league:'LEN Champions League',   home:'Pro Recco',       away:'Barceloneta',        pred:'Pro Recco Win',        odds:1.75, conf:77, edge:4.9, result:'WIN'     },
+
+  // ── ⛳ Golf ──
+  { sport:'⛳ Golf',       league:'The Masters H2H',         home:'Scottie Scheffler',away:'Rory McIlroy',     pred:'Scheffler Win',        odds:1.60, conf:81, edge:6.2, result:'WIN'     },
+  { sport:'⛳ Golf',       league:'PGA Championship H2H',    home:'Jon Rahm',        away:'Xander Schauffele', pred:'Rahm Win',             odds:1.75, conf:72, edge:3.7, result:'PENDING' },
+
+  // ── 🚴 Cycling ──
+  { sport:'🚴 Cycling',   league:'Tour de France H2H',      home:'Tadej Pogacar',   away:'Jonas Vingegaard',   pred:'Pogacar Win',          odds:1.70, conf:80, edge:5.7, result:'WIN'     },
+  { sport:'🚴 Cycling',   league:'Giro d\'Italia H2H',      home:'Remco Evenepoel', away:'Primoz Roglic',      pred:'Evenepoel Win',        odds:1.85, conf:74, edge:4.3, result:'LOSS'    },
+
+  // ── 💥 Crash Games ──
+  { sport:'💥 Crash',     league:'BC.Game Crash',           home:'Target: 2.00x',   away:'—',                  pred:'Bust Below 2.00x',     odds:1.95, conf:71, edge:3.8, result:'WIN'     },
+  { sport:'💥 Crash',     league:'Stake Crash',             home:'Target: 1.50x',   away:'—',                  pred:'Bust Below 1.50x',     odds:1.80, conf:75, edge:4.5, result:'PENDING' },
+];
+
+const predTable = document.getElementById('predTable');
+PREDICTION_EVENTS.forEach((ev, i) => {
+  const conf    = ev.conf;
+  const odds    = ev.odds;
+  const edge    = ev.edge;
+  const isValue = edge > 4.5;
+  const result  = ev.result;
+  const pnl     = result === 'WIN' ? +((odds - 1) * 10).toFixed(1) : result === 'LOSS' ? -10 : 0;
+  const confColor = conf >= 80 ? 'var(--green)' : conf >= 72 ? 'var(--yellow)' : 'var(--orange)';
+  const matchLabel = ev.away === '—' ? ev.home : `${ev.home} vs ${ev.away}`;
+  predTable.innerHTML += `<tr>
+    <td>
+      <div style="font-size:12px;font-weight:700;color:var(--text)">${matchLabel}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${ev.league}</div>
+    </td>
+    <td><span style="font-size:11px;white-space:nowrap">${ev.sport}</span></td>
+    <td style="font-size:11px;color:var(--cyan);font-weight:600">${ev.pred}</td>
+    <td><span class="mono" style="color:${confColor};font-size:12px;font-weight:700">${conf}%</span></td>
+    <td class="mono" style="font-size:12px;font-weight:600">${odds.toFixed(2)}</td>
+    <td>${isValue
+      ? `<span class="badge b-orange" style="font-size:10px">+${edge}%</span>`
+      : `<span style="font-size:11px;color:var(--text3)">+${edge}%</span>`}
+    </td>
+    <td><span class="badge ${result === 'WIN' ? 'b-green' : result === 'LOSS' ? 'b-red' : 'b-yellow'}" style="font-size:10px">${result}</span></td>
+    <td class="mono" style="font-size:12px;font-weight:${pnl !== 0 ? 700 : 400};color:${pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text3)'}">${pnl > 0 ? '+' + pnl : pnl !== 0 ? pnl : '—'}</td>
+  </tr>`;
+});
+
+// ── Alert rules ──
+const ALERT_RULES = [
+  { name:'High Crawler Latency', cond:'Latency > 2000ms', channel:'Email + Slack', active: true },
+  { name:'Steam Move Detection', cond:'Line moves > 0.15 in < 15min', channel:'Slack', active: true },
+  { name:'Value Bet Alert', cond:'Edge > 5% AND Confidence > 80%', channel:'Email', active: true },
+  { name:'Crawler Downtime', cond:'Crawler offline > 3 min', channel:'Email + Slack', active: false },
+  { name:'Model Accuracy Drop', cond:'Accuracy < 70% (7d rolling)', channel:'Email', active: true },
+];
+const alertRulesEl = document.getElementById('alertRules');
+ALERT_RULES.forEach(r => {
+  alertRulesEl.innerHTML += `<div class="flex-between" style="padding:12px 0;border-bottom:1px solid rgba(30,45,61,0.4)">
+    <div>
+      <div style="font-size:13px;font-weight:600">${r.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">Trigger: ${r.cond} · Channel: ${r.channel}</div>
+    </div>
+    <div class="toggle ${r.active?'on':''}" onclick="this.classList.toggle('on')"></div>
+  </div>`;
+});
+
+// ── Users table ──
+const USERS = [
+  { name:'Adebayo Okafor', email:'adebayo@gmail.com', role:'Premium', status:'Active', lastLogin:'2 min ago', joined:'Jan 2026' },
+  { name:'Kwame Mensah', email:'kwame@gmail.com', role:'Premium', status:'Active', lastLogin:'18 min ago', joined:'Nov 2025' },
+  { name:'James Kariuki', email:'james@gmail.com', role:'Free', status:'Active', lastLogin:'1 hr ago', joined:'Feb 2026' },
+  { name:'Amara Diallo', email:'amara@gmail.com', role:'Pro', status:'Active', lastLogin:'3 hr ago', joined:'Oct 2025' },
+  { name:'Chioma Eze', email:'chioma@gmail.com', role:'Premium', status:'Active', lastLogin:'5 hr ago', joined:'Dec 2025' },
+  { name:'Admin User', email:'admin@oddsoracle.ai', role:'Admin', status:'Active', lastLogin:'Just now', joined:'Sep 2025' },
+  { name:'Musa Ibrahim', email:'musa@gmail.com', role:'Free', status:'Inactive', lastLogin:'3 days ago', joined:'Feb 2026' },
+  { name:'Fatima Al-Rashid', email:'fatima@gmail.com', role:'Premium', status:'Active', lastLogin:'6 hr ago', joined:'Jan 2026' },
+];
+const usersTable = document.getElementById('usersTable');
+USERS.forEach(u => {
+  const roleColors = { Admin:'b-red', Pro:'b-purple', Premium:'b-cyan', Free:'b-yellow' };
+  usersTable.innerHTML += `<tr>
+    <td style="font-weight:600;font-size:12px">${u.name}</td>
+    <td style="font-size:12px;color:var(--text2)">${u.email}</td>
+    <td><span class="badge ${roleColors[u.role]||'b-cyan'}">${u.role}</span></td>
+    <td><span class="badge ${u.status==='Active'?'b-green':'b-red'}">${u.status}</span></td>
+    <td style="font-size:11px;color:var(--text3)">${u.lastLogin}</td>
+    <td style="font-size:11px;color:var(--text3)">${u.joined}</td>
+    <td><div class="flex gap-6"><button class="btn btn-ghost btn-sm"><i class="fa fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()"><i class="fa fa-ban"></i></button></div></td>
+  </tr>`;
+});
+
+// ── System health ──
+function updateHealth() {
+  const vals = { cpu: 30+Math.random()*40, ram: 55+Math.random()*20, disk: 42+Math.random()*5, net: 20+Math.random()*60 };
+  document.getElementById('cpuVal').textContent = vals.cpu.toFixed(1)+'%';
+  document.getElementById('cpuBar').style.width = vals.cpu+'%';
+  document.getElementById('ramVal').textContent = vals.ram.toFixed(1)+'%';
+  document.getElementById('ramBar').style.width = vals.ram+'%';
+  document.getElementById('diskVal').textContent = vals.disk.toFixed(1)+'%';
+  document.getElementById('diskBar').style.width = vals.disk+'%';
+  document.getElementById('netVal').textContent = vals.net.toFixed(1)+' MB/s';
+  document.getElementById('netBar').style.width = Math.min(vals.net, 100)+'%';
+}
+updateHealth(); setInterval(updateHealth, 3000);
+
+// ── System logs ──
+const LOG_ENTRIES = [
+  ['INFO', 'crawler.engine',  'Scan cycle v4.2 started — 19 books queued | 22 proxy nodes active'],
+  ['INFO', 'crawler.dk',      'DraftKings ✓ — 847 markets | 1,204 props | 1.2s'],
+  ['INFO', 'crawler.fd',      'FanDuel ✓ — 912 markets | 988 props | 1.4s'],
+  ['WARN', 'crawler.betmgm',  'BetMGM latency elevated: 3,840ms (threshold: 2,000ms) — retrying'],
+  ['INFO', 'crawler.betmgm',  'BetMGM ✓ — 763 markets | retry succeeded | 3.8s'],
+  ['INFO', 'crawler.bet365',  'bet365 ✓ — 1,204 markets | 2,100 in-play | 0.9s'],
+  ['INFO', 'crawler.bet9ja',  'Bet9ja ✓ — 1,089 markets | Virtual + Jackpot | 1.1s'],
+  ['INFO', 'crawler.bw',      'Betwinner ✓ — 1,432 markets | eSports included | 1.6s'],
+  ['INFO', 'crawler.bc',      'Bc.game ✓ — 623 markets | Crash + Plinko detected | 2.4s'],
+  ['INFO', 'crawler.stake',   'Stake ✓ — 741 markets | Aviator signals active | 1.9s'],
+  ['INFO', 'crawler.betano',  'Betano ✓ — 892 markets | Live TV streaming | 1.3s'],
+  ['INFO', 'crawler.1xbet',   '1xBet ✓ — 2,104 markets | Largest selection in pool | 2.0s'],
+  ['INFO', 'crawler.22bet',   '22bet ✓ — 1,156 markets | Casino integrated | 1.4s'],
+  ['INFO', 'crawler.betking', 'Betking ✓ — 934 markets | Jackpot + Super9ja active | 1.2s'],
+  ['WARN', 'crawler.msport',  'Msport rate-limit detected — throttling to 1 req/2s on NG proxy'],
+  ['INFO', 'crawler.msport',  'Msport ✓ — 788 markets | Virtuals + Live resumed | 1.6s'],
+  ['INFO', 'crawler.afropari','Afropari ✓ — 612 markets | Pan-African odds pool | 2.1s'],
+  ['WARN', 'crawler.helabet', 'Helabet → geo-block detected on EU proxy — switching to Africa node'],
+  ['INFO', 'crawler.helabet', 'Helabet ✓ — 843 markets | High odds specialty | 1.8s'],
+  ['INFO', 'crawler.engine',  'All 19 books online — 15,413 markets aggregated successfully'],
+  ['INFO', 'odds.normalizer', 'Vig removal complete — implied probabilities computed across 54 events'],
+  ['WARN', 'line.monitor',    'Steam alert: Man City -0.15 move (DraftKings → bet365 → Betking)'],
+  ['WARN', 'line.monitor',    'Sharp money: Betwinner/22bet offering +8% edge on Lakers ML vs others'],
+  ['WARN', 'line.monitor',    'Bc.game crash avg 3.4x last 20 rounds — AI pattern shift detected'],
+  ['WARN', 'line.monitor',    'Helabet boosted odds on Real Madrid: +4.2% above 19-book market avg'],
+  ['INFO', 'ai.model',        'Claude AI: 54 events analyzed | 6 signals per event | 4.8s total'],
+  ['INFO', 'value.detector',  '7 VALUE BETS identified — edge > 4%: Man City, Djokovic, Bayern, Lakers, Real Madrid, Betking+22bet spread'],
+  ['INFO', 'crawler.engine',  'Scan complete — 19/19 online | 15,413 markets | next refresh 55s'],
+  ['INFO', 'payment.gateway', 'New Premium subscription: +₦5,000 (adebayo@gmail.com)'],
+  ['ERROR','proxy.pool',      'Proxy node 7 unreachable (timeout 30s) — rotated to node 15'],
+  ['INFO', 'proxy.pool',      'Proxy rotation successful — node 15 active | latency 290ms'],
+  ['INFO', 'ai.model',        'Model accuracy calibration: 78.4% (14d) | Stake crash signal: +12.3%'],
+  ['WARN', 'api.claude',      'Anthropic API: 82% of daily quota used — throttling in 2 hrs'],
+  ['INFO', 'crawler.afropari','Afropari scan spike: +310 new live markets detected | injecting...'],
+  ['WARN', 'crawler.22bet',   '22bet casino overlay disrupting sports parser — isolated & bypassed'],
+];
+const logColors = { INFO:'log-info', WARN:'log-warn', ERROR:'log-error' };
+const logContainer = document.getElementById('logContainer');
+function addLog(entry, ts) {
+  const [level, source, msg] = entry;
+  logContainer.innerHTML += `<div class="log-line">
+    <span class="log-ts">[${ts}]</span>
+    <span class="log-level ${logColors[level]}">${level}</span>
+    <span style="color:var(--text3);width:160px;flex-shrink:0">${source}</span>
+    <span class="log-body">${msg}</span>
+  </div>`;
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+LOG_ENTRIES.forEach((e, i) => {
+  const d = new Date(); d.setMinutes(d.getMinutes() - (LOG_ENTRIES.length - i) * 2);
+  addLog(e, d.toLocaleTimeString('en-US',{hour12:false}));
+});
+setInterval(() => {
+  const e = LOG_ENTRIES[Math.floor(Math.random()*LOG_ENTRIES.length)];
+  addLog(e, new Date().toLocaleTimeString('en-US',{hour12:false}));
+}, 5000);
+function clearLogs() { logContainer.innerHTML = ''; showToast('Logs cleared','success'); }
+
+// ── Activity feed ──
+const FEED_ITEMS = [
+  { cls:'fd-green',  text:'Man City 84% confidence Grade A — BET signal', time:'just now' },
+  { cls:'fd-orange', text:'💎 Value bet: Bayern Munich +7.2% edge (Betano vs Betking)', time:'1m ago' },
+  { cls:'fd-cyan',   text:'Scan complete: 19/19 books | 15,413 markets ingested', time:'2m ago' },
+  { cls:'fd-green',  text:'Stake Aviator avg: 4.2x last 15 rounds (above 90d mean)', time:'3m ago' },
+  { cls:'fd-orange', text:'⚡ Steam: Man City -0.15 move across DraftKings → bet365 → Betking', time:'4m ago' },
+  { cls:'fd-green',  text:'New Premium subscription: +₦5,000 (kwame@gmail.com)', time:'5m ago' },
+  { cls:'fd-cyan',   text:'22bet offering +8.4% edge on Lakers ML — value detected', time:'6m ago' },
+  { cls:'fd-green',  text:'Prediction WIN confirmed: Lakers +185 @ FanDuel ✓', time:'8m ago' },
+  { cls:'fd-orange', text:'Bc.game crash pattern: 3 consecutive sub-2x rounds detected', time:'9m ago' },
+  { cls:'fd-cyan',   text:'1xBet: 2,104 markets scraped | highest individual pool this cycle', time:'11m ago' },
+  { cls:'fd-red',    text:'BetMGM latency: 3,840ms — above 2,000ms threshold', time:'14m ago' },
+  { cls:'fd-green',  text:'Bet9ja Jackpot odds ingested: 1,089 markets processed', time:'17m ago' },
+  { cls:'fd-cyan',   text:'Betking ✓ — Super9ja jackpot pool odds injected | 934 markets', time:'19m ago' },
+  { cls:'fd-orange', text:'💎 Helabet boosted odds: Real Madrid +4.2% above 19-book avg', time:'21m ago' },
+  { cls:'fd-green',  text:'Msport ✓ — Virtuals resumed after rate-limit throttle | 788 markets', time:'23m ago' },
+  { cls:'fd-cyan',   text:'Afropari ✓ — Pan-African odds pool: 612 markets ingested | 2.1s', time:'25m ago' },
+  { cls:'fd-red',    text:'Helabet geo-block on EU proxy — switched to Africa node (resolved)', time:'28m ago' },
+  { cls:'fd-orange', text:'⚡ 22bet/Msport spread detected on Bayern ML — +9% edge flagged', time:'30m ago' },
+];
+const feedEl = document.getElementById('activityFeed');
+FEED_ITEMS.forEach(f => {
+  feedEl.innerHTML += `<div class="feed-item"><div class="feed-dot ${f.cls}"></div><span style="flex:1">${f.text}</span><span class="feed-time">${f.time}</span></div>`;
+});
+setInterval(() => {
+  const f = FEED_ITEMS[Math.floor(Math.random()*FEED_ITEMS.length)];
+  const div = document.createElement('div');
+  div.className = 'feed-item';
+  div.style.animation = 'fadeIn 0.4s ease';
+  div.innerHTML = `<div class="feed-dot ${f.cls}"></div><span style="flex:1">${f.text}</span><span class="feed-time">just now</span>`;
+  if (feedEl.children.length > 8) feedEl.removeChild(feedEl.lastChild);
+  feedEl.insertBefore(div, feedEl.firstChild);
+}, 8000);
+
+// Admin sidebar mobile toggle
+(function(){
+  const toggle = document.getElementById('adminSidebarToggle');
+  const sidebar = document.getElementById('adminSidebar');
+  const overlay = document.getElementById('adminSidebarOverlay');
+  if(!toggle || !sidebar || !overlay) return;
+  function openSidebar(){
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    toggle.innerHTML = '<i class="fa fa-times"></i>';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar(){
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    toggle.innerHTML = '<i class="fa fa-bars"></i>';
+    document.body.style.overflow = '';
+  }
+  toggle.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+  overlay.addEventListener('click', closeSidebar);
+  // Close when a nav item is clicked
+  sidebar.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => {
+    if(window.innerWidth <= 768) closeSidebar();
+  }));
+})();
+</script>
+</body>
+</html>

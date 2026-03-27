@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FAQ — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+/* ── Layout ── */
+.faq-layout { display: grid; grid-template-columns: 240px 1fr; gap: 40px; padding: 80px 0; }
+@media(max-width:1024px){ .faq-layout { grid-template-columns: 200px 1fr; gap: 24px; } }
+@media(max-width:768px){
+  .faq-layout { grid-template-columns:1fr; padding: 24px 0 48px; }
+  .faq-nav { display: none; }
+  .faq-q  { padding: 14px 16px; font-size: 13px; }
+  .faq-a  { font-size: 12px; }
+  .faq-item.open .faq-a { padding: 0 16px 14px; }
+  .faq-section-title { font-size: 1.1rem; }
+}
+@media(max-width:480px){
+  .faq-q { padding: 12px 14px; gap: 8px; }
+  .faq-section { margin-bottom: 28px; }
+}
+
+/* ── Side nav ── */
+.faq-nav { position: sticky; top: 84px; height: fit-content; }
+.faq-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer; transition: var(--transition);
+  font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 4px;
+}
+.faq-nav-item:hover,
+.faq-nav-item.active { background: var(--accent-cyan-dim); color: var(--accent-cyan); }
+
+/* ── Section title ── */
+.faq-section { margin-bottom: 44px; }
+.faq-section-title {
+  font-size: 1.3rem; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--fis-color, var(--accent-cyan));
+}
+
+/* ════════════════════════════════════
+   FAQ ITEM — Pop + Radiant Glow
+   ════════════════════════════════════ */
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+
+  /* Spring pop transition */
+  transition:
+    transform   0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.28s ease,
+    box-shadow   0.28s ease;
+}
+
+/* ── Radial light bloom from top-centre ── */
+.faq-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 100% 80% at 50% -10%,
+    var(--fi-glow, rgba(0,212,255,0.16)),
+    transparent 62%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  z-index: 0;
+}
+
+/* ── Left accent bar that slides up ── */
+.faq-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(
+    180deg,
+    var(--fi-color, var(--accent-cyan)),
+    color-mix(in srgb, var(--fi-color, var(--accent-cyan)) 40%, transparent)
+  );
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border-radius: 3px 0 0 3px;
+  z-index: 2;
+}
+
+/* ── Hover state — pop up + glow border ── */
+.faq-item:hover {
+  transform: translateY(-5px) scale(1.012);
+  border-color: var(--fi-color, var(--accent-cyan));
+  box-shadow:
+    0 16px 44px -10px var(--fi-shadow, rgba(0,212,255,0.3)),
+    0  4px 14px -4px  rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.faq-item:hover::after  { opacity: 1; }
+.faq-item:hover::before { transform: scaleY(1); }
+
+/* ── Open (expanded) state ── */
+.faq-item.open {
+  transform: translateY(-3px);
+  border-color: var(--fi-color, var(--accent-cyan));
+  box-shadow:
+    0 10px 32px -8px var(--fi-shadow, rgba(0,212,255,0.22)),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.faq-item.open::after  { opacity: 0.7; }
+.faq-item.open::before { transform: scaleY(1); }
+
+/* ── Question row ── */
+.faq-q {
+  padding: 17px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 600;
+  position: relative; z-index: 1;
+  transition: color 0.25s ease;
+  gap: 12px;
+}
+.faq-item:hover .faq-q,
+.faq-item.open  .faq-q { color: var(--fi-color, var(--accent-cyan)); }
+
+/* ── Answer body ── */
+.faq-a {
+  padding: 0 20px;
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.42s ease, padding 0.32s ease;
+  font-size: 13px; color: var(--text-secondary); line-height: 1.85;
+  position: relative; z-index: 1;
+}
+.faq-item.open .faq-a { max-height: 500px; padding: 0 20px 18px; }
+
+/* ── Chevron icon ── */
+.faq-icon {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--bg-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+  color: var(--text-muted);
+  transition:
+    background  0.28s ease,
+    color       0.28s ease,
+    transform   0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow  0.28s ease;
+  position: relative; z-index: 1;
+}
+.faq-item:hover .faq-icon {
+  background: var(--fi-color, var(--accent-cyan));
+  color: #000;
+  box-shadow: 0 0 14px var(--fi-shadow, rgba(0,212,255,0.5));
+  transform: scale(1.18) rotate(-15deg);
+}
+.faq-item.open .faq-icon {
+  background: var(--fi-color, var(--accent-cyan)) !important;
+  color: #000 !important;
+  box-shadow: 0 0 14px var(--fi-shadow, rgba(0,212,255,0.5));
+  transform: scale(1.1) rotate(180deg) !important;
+}
+
+/* ── Answer divider line ── */
+.faq-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--fi-color, var(--accent-cyan)),
+    transparent 70%
+  );
+  opacity: 0.25;
+  margin: 0 20px;
+  position: relative; z-index: 1;
+}
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
+    <div class="nav-links" id="navLinks">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="predictions.html" class="nav-link">AI Predictions</a>
+      <a href="tracker.html" class="nav-link">Tracker</a>
+      <a href="forum.html" class="nav-link">Forum</a>
+      <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
+      <a href="how-it-works.html" class="nav-link">How It Works</a>
+      <a href="blog.html" class="nav-link">Blog</a>
+      <a href="faq.html" class="nav-link active">FAQ</a>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
+        <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">Sign Up</a>
+      </div>      <a href="payment.html" class="nav-link">Pricing</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
+      <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <div class="hero-tag">Help Center</div>
+    <h1>Frequently Asked <span class="text-cyan">Questions</span></h1>
+    <p>Everything you need to know about OddsOracle, our AI predictions, and how to use the platform effectively.</p>
+    <input type="text" class="form-input" placeholder="🔍  Search FAQ..." style="max-width:440px;margin:0 auto" id="faqSearch"/>
+  </div>
+</div>
+
+<div class="container">
+  <div class="faq-layout">
+    <!-- Left nav -->
+    <div class="faq-nav">
+      <div class="card">
+        <div class="card-title mb-12">SECTIONS</div>
+        <div class="faq-nav-item active" onclick="scrollTo('general')"><i class="fa fa-info-circle" style="color:var(--accent-cyan)"></i> General</div>
+        <div class="faq-nav-item" onclick="scrollTo('predictions')"><i class="fa fa-robot" style="color:var(--accent-green)"></i> Predictions</div>
+        <div class="faq-nav-item" onclick="scrollTo('pricing')"><i class="fa fa-credit-card" style="color:var(--accent-orange)"></i> Pricing & Billing</div>
+        <div class="faq-nav-item" onclick="scrollTo('accuracy')"><i class="fa fa-chart-line" style="color:var(--accent-yellow)"></i> Accuracy</div>
+        <div class="faq-nav-item" onclick="scrollTo('account')"><i class="fa fa-user" style="color:#a78bfa"></i> Account</div>
+        <div class="faq-nav-item" onclick="scrollTo('crash')"><i class="fa fa-rocket" style="color:var(--accent-orange)"></i> Crash Games</div>
+      </div>
+    </div>
+
+    <!-- FAQ content -->
+    <div id="faqContent">
+      <!-- Sections filled by JS -->
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+const FAQ_DATA = [
+  {
+    id: 'general', icon: '🌐', title: 'General Questions',
+    items: [
+      { q: 'What is OddsOracle?', a: 'OddsOracle is an AI-powered sports betting intelligence platform that crawls odds from 8 major sportsbooks in real-time, analyzes them using Claude AI, and delivers smart predictions with 75–88% accuracy. It also detects value bets where the market has underpriced an outcome.' },
+      { q: 'How does the crawler work?', a: 'Our automated crawler engine runs continuously, scraping live odds from DraftKings, FanDuel, BetMGM, Caesars, bet365, PointsBet, Unibet, and William Hill every 60 seconds. It collects odds data, line movements, and market depth, then normalizes it across all books for fair comparison.' },
+      { q: 'What sports does OddsOracle cover?', a: 'OddsOracle currently covers Soccer (Premier League, La Liga, Champions League, Serie A, Bundesliga, and more), NBA, NFL, Tennis (ATP/WTA Masters), NHL, Cricket, and Crash games. We are continuously adding more leagues and sports based on user demand.' },
+      { q: 'Is OddsOracle available in my country?', a: 'OddsOracle is accessible worldwide. We have specific sportsbook data and reviews tailored for Nigeria, Ghana, Kenya, Tanzania, Uganda, South Africa, UK, and USA. The platform can be used from any country with internet access.' },
+      { q: 'Does OddsOracle guarantee I will win money?', a: 'No. OddsOracle is an analytical tool that provides AI-powered predictions based on data and probability. We do not guarantee any winnings. Betting always involves risk. Our 75–88% accuracy rate is a statistical average — individual results will vary. Please bet responsibly.' },
+    ]
+  },
+  {
+    id: 'predictions', icon: '🤖', title: 'AI Predictions',
+    items: [
+      { q: 'How are predictions generated?', a: 'Each prediction is powered by Claude AI, which analyzes 6 key signal factors: (1) Recent Form — last 5 games form for both teams, (2) Head-to-Head Record — historical matchup data, (3) Home/Away Advantage — venue effect statistics, (4) Sharp Line Movement — professional bettor activity tracked in real-time, (5) Injury Report — impact assessment of missing key players, (6) Public Money Fade — contrarian signals where public is wrong. The model combines these signals to compute win probability and compare it against market odds.' },
+      { q: 'What does the confidence score mean?', a: 'The confidence score (shown as a percentage like "84%") represents how strongly the AI model believes in its predicted outcome. Scores above 80% are Grade A picks — our highest conviction bets. 72–79% are Grade B. Below 72% are Grade C. We recommend focusing on Grade A and B picks.' },
+      { q: 'What is a VALUE BET?', a: 'A value bet is flagged when our AI model calculates that the true probability of an outcome is higher than what the market odds imply. For example, if our model gives Team A a 65% win probability, but the bookmaker\'s odds imply only 52%, that\'s a +13% edge — a clear value bet. Long-term, betting consistently on value will produce positive ROI.' },
+      { q: 'How often are predictions updated?', a: 'Predictions are refreshed every time our crawlers complete a scan cycle, which is approximately every 60 seconds. This means odds, line movements, and AI assessments are continuously updated throughout the day.' },
+      { q: 'What is the Claude AI Verdict?', a: 'Each event includes a 3-sentence sharp analyst verdict generated by Claude (Anthropic\'s AI) that summarizes the key factors driving the prediction, identifies the primary risk, and provides a clear recommendation: BET (strong signal), MONITOR (borderline — watch for odds movement), or PASS (no edge detected).' },
+    ]
+  },
+  {
+    id: 'pricing', icon: '💳', title: 'Pricing & Billing',
+    items: [
+      { q: 'How much does OddsOracle cost?', a: 'OddsOracle Premium costs ₦5,000 per month (approximately $3.20 USD). This gives you unlimited access to all AI predictions, value bet alerts, the odds comparison engine, prediction tracker, crash game signals, and community forum. There is also a 7-day free trial — no credit card required.' },
+      { q: 'What payment methods are accepted?', a: 'We accept Nigerian bank cards (Visa/Mastercard), bank transfers, USSD payments, and popular mobile wallets including OPay, PalmPay, Kuda, and GTBank. For international users, we accept Stripe (Visa/Mastercard), PayPal, and major cryptocurrencies.' },
+      { q: 'Can I cancel anytime?', a: 'Yes. You can cancel your subscription at any time from your Account Settings with no cancellation fees. Your access will continue until the end of your current billing period.' },
+      { q: 'Is there a free tier?', a: 'Yes. The free tier gives you access to 3 predictions per day, basic odds comparison (top 3 books only), and community forum access. To unlock unlimited predictions, all 8 sportsbooks, value bets, crash game signals, and full analytics — upgrade to Premium.' },
+    ]
+  },
+  {
+    id: 'accuracy', icon: '📊', title: 'Prediction Accuracy',
+    items: [
+      { q: 'How accurate are the predictions?', a: 'Our AI model achieves 75–88% accuracy on Grade A and Grade B picks. The average across all picks is approximately 78.4%. Soccer predictions tend to be most accurate (81%), followed by Tennis (83%), NBA (76%), and NFL (74%). These figures are tracked live in the Prediction Tracker.' },
+      { q: 'How is accuracy measured?', a: 'Accuracy is calculated as the percentage of predictions where the AI\'s predicted outcome matched the actual result. We track every single prediction with timestamps and log outcomes automatically. The Prediction Tracker page shows your personal results alongside the overall platform stats.' },
+      { q: 'Why isn\'t the accuracy 100%?', a: 'No prediction system can achieve 100% accuracy in sports because sports are inherently unpredictable. Our AI model is based on historical data and statistical patterns — upsets, last-minute injuries, referee decisions, and weather can all affect outcomes in ways the model cannot foresee. Our goal is to give you a consistent statistical edge over time.' },
+    ]
+  },
+  {
+    id: 'account', icon: '👤', title: 'Account & Security',
+    items: [
+      { q: 'How do I register?', a: 'Click "Sign Up" in the navigation bar, fill in your name, email, phone number, and country. You can also sign in with Google. Verification is simple — we\'ll send a code to your phone or email. The whole process takes under 2 minutes.' },
+      { q: 'Is my data safe?', a: 'Yes. We use end-to-end encryption (TLS 1.3) for all data transmission. We never share your personal data with third parties. Your payment information is processed by PCI DSS-compliant payment gateways — we never store card numbers on our servers.' },
+      { q: 'How do I reset my password?', a: 'Click "Forgot password?" on the login page, enter your email or phone number, and we\'ll send you a reset link or OTP. If you have trouble, contact support@oddsoracle.ai.' },
+    ]
+  },
+  {
+    id: 'crash', icon: '💥', title: 'Crash Games',
+    items: [
+      { q: 'How does the Crash Game AI work?', a: 'The Crash Game predictor analyzes historical multiplier data patterns from popular crash games. Our AI identifies payout patterns, streaks, and statistical distributions to recommend safe cashout targets and aggressive targets. It assigns a bust risk percentage to each round based on recent history.' },
+      { q: 'Which crash games are supported?', a: 'Our crash AI signals are calibrated for general crash game mechanics and work as guidance for Aviator, JetX, Spaceman, and similar crash multiplier games. Always use these signals as informed guidance, not guarantees.' },
+      { q: 'What is "Safe Cashout" vs "AI Target"?', a: '"Safe Cashout" is the conservative multiplier target that our model predicts has a high probability (>75%) of being reached before the crash. "AI Target" is the optimistic target that offers better return but slightly higher risk. The bust risk percentage tells you the estimated probability of the game crashing before the safe target.' },
+    ]
+  }
+];
+
+/* ── Per-section color themes ── */
+const SECTION_THEMES = {
+  general:     { color:'#00d4ff', glow:'rgba(0,212,255,0.17)',   shadow:'rgba(0,212,255,0.35)'   },
+  predictions: { color:'#00ff88', glow:'rgba(0,255,136,0.17)',   shadow:'rgba(0,255,136,0.35)'   },
+  pricing:     { color:'#ff6b35', glow:'rgba(255,107,53,0.17)',  shadow:'rgba(255,107,53,0.35)'  },
+  accuracy:    { color:'#fbbf24', glow:'rgba(251,191,36,0.17)',  shadow:'rgba(251,191,36,0.35)'  },
+  account:     { color:'#a78bfa', glow:'rgba(167,139,250,0.17)', shadow:'rgba(167,139,250,0.35)' },
+  crash:       { color:'#ff4560', glow:'rgba(255,69,96,0.17)',   shadow:'rgba(255,69,96,0.35)'   },
+};
+
+function renderFAQ(data) {
+  const container = document.getElementById('faqContent');
+  container.innerHTML = '';
+  data.forEach(section => {
+    const theme = SECTION_THEMES[section.id] || SECTION_THEMES.general;
+    const div = document.createElement('div');
+    div.className = 'faq-section reveal';
+    div.id = section.id;
+    div.style.setProperty('--fis-color', theme.color);
+    div.innerHTML = `
+      <div class="faq-section-title">
+        <span style="font-size:1.4rem">${section.icon}</span>
+        ${section.title}
+      </div>`;
+    section.items.forEach((item) => {
+      div.innerHTML += `
+        <div class="faq-item"
+          style="--fi-color:${theme.color};--fi-glow:${theme.glow};--fi-shadow:${theme.shadow}"
+          onclick="toggleFAQ(this)">
+          <div class="faq-q">
+            <span>${item.q}</span>
+            <div class="faq-icon"><i class="fa fa-chevron-down"></i></div>
+          </div>
+          <div class="faq-divider"></div>
+          <div class="faq-a">${item.a}</div>
+        </div>`;
+    });
+    container.appendChild(div);
+  });
+}
+
+function toggleFAQ(el) {
+  const isOpen = el.classList.contains('open');
+  el.closest('.faq-section').querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+function scrollTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+  document.querySelectorAll('.faq-nav-item').forEach(i => i.classList.remove('active'));
+  event.target.closest('.faq-nav-item').classList.add('active');
+}
+
+document.getElementById('faqSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  if (!q) { renderFAQ(FAQ_DATA); return; }
+  const filtered = FAQ_DATA.map(s => ({
+    ...s, items: s.items.filter(i => i.q.toLowerCase().includes(q) || i.a.toLowerCase().includes(q))
+  })).filter(s => s.items.length);
+  renderFAQ(filtered);
+});
+
+renderFAQ(FAQ_DATA);
+</script>
+</body>
+</html>

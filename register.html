@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Register — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+@media(max-width:900px){
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-left { display: none; }
+  .auth-right { padding: 24px 16px; align-items: flex-start; padding-top: 80px; min-height: 100vh; }
+  .auth-box { max-width: 100%; }
+}
+@media(max-width:480px){
+  .auth-right { padding: 72px 14px 32px; }
+  .auth-title { font-size: 1.6rem; }
+  .grid-2 { grid-template-columns: 1fr !important; }
+}
+.auth-left { background: linear-gradient(135deg, #080c14 0%, #0d1421 100%); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: 60px; }
+.auth-left::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 60% at 30% 50%, rgba(0,212,255,0.1),transparent 70%); }
+.auth-bg-grid { position: absolute; inset:0; background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px); background-size:50px 50px; }
+.auth-right { background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; padding: 40px; }
+.auth-box { width: 100%; max-width: 440px; }
+.auth-logo { font-family: 'Rajdhani',sans-serif; font-size: 22px; font-weight: 700; color: #fff; letter-spacing: 2px; margin-bottom: 32px; display: flex; align-items: center; gap: 8px; }
+.auth-title { font-size: 2rem; margin-bottom: 8px; }
+.auth-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 32px; }
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background: var(--border); }
+.social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 11px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary); transition: var(--transition); width: 100%; }
+.social-btn:hover { border-color: var(--accent-cyan); color: var(--text-primary); }
+.strength-bar { height: 4px; border-radius: 2px; margin-top: 6px; display: flex; gap: 4px; }
+.strength-seg { flex: 1; border-radius: 2px; background: var(--border); transition: background 0.3s; }
+.feature-pill { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.12); border-radius: 10px; margin-bottom: 10px; font-size: 13px; }
+.feature-pill i { color: var(--accent-cyan); }
+.password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted); font-size: 14px; }
+.input-wrap { position: relative; }
+
+/* Username field */
+.username-wrap { position: relative; display: flex; align-items: center; }
+.username-at {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 40px; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,212,255,0.08); border: 1px solid var(--border);
+  border-right: none; border-radius: 8px 0 0 8px;
+  font-family: 'Rajdhani', sans-serif; font-size: 16px; font-weight: 700;
+  color: var(--accent-cyan); pointer-events: none; transition: all 0.25s;
+  z-index: 1;
+}
+.username-input {
+  border-radius: 0 8px 8px 0 !important;
+  border-left: none !important;
+  padding-left: 14px !important;
+  flex: 1;
+}
+.username-wrap:focus-within .username-at {
+  border-color: var(--accent-cyan);
+  background: rgba(0,212,255,0.14);
+  box-shadow: -3px 0 0 2px rgba(0,212,255,0.1);
+}
+.username-wrap:focus-within .username-input {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 3px 0 0 2px rgba(0,212,255,0.1), 0 0 0 0 transparent !important;
+}
+
+/* Availability badge */
+.avail-badge {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+  pointer-events: none; transition: all 0.25s;
+}
+.avail-checking { color: var(--text-muted); }
+.avail-ok  { color: var(--accent-green); background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.25); }
+.avail-taken { color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); }
+
+/* Username preview badge on left panel */
+.user-preview-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 20px; padding: 4px 12px; font-size: 13px;
+  font-family: 'Rajdhani', sans-serif; font-weight: 700;
+  color: var(--accent-cyan); margin-top: 8px;
+  transition: all 0.3s;
+}
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- LEFT PANEL -->
+  <div class="auth-left">
+    <div class="auth-bg-grid"></div>
+    <div style="position:relative;z-index:2">
+      <div class="auth-logo"><div class="logo-dot"></div>ODDS<span class="text-cyan">ORACLE</span></div>
+      <h2 style="font-size:2rem;margin-bottom:12px">Join 12,000+ Smart Bettors</h2>
+      <p style="color:var(--text-secondary);font-size:15px;margin-bottom:32px;line-height:1.7">Get AI-powered predictions, live odds from 8 sportsbooks, and value bet alerts delivered straight to your dashboard.</p>
+      <div class="feature-pill"><i class="fa fa-robot"></i> Claude AI predictions at 75–88% accuracy</div>
+      <div class="feature-pill"><i class="fa fa-spider"></i> Live crawlers scanning 8 sportsbooks</div>
+      <div class="feature-pill"><i class="fa fa-gem"></i> Value bet detection with +EV alerts</div>
+      <div class="feature-pill"><i class="fa fa-chart-line"></i> Full prediction tracker & ROI analytics</div>
+      <div class="feature-pill"><i class="fa fa-rocket"></i> Crash game AI signals included</div>
+      <div class="mt-24" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div class="flex gap-12" style="align-items:center;margin-bottom:8px">
+          <div style="display:flex">
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(0,212,255,0.2);border:2px solid var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">AO</span>
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(0,255,136,0.2);border:2px solid var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:-8px">KM</span>
+            <span style="width:28px;height:28px;border-radius:50%;background:rgba(124,58,237,0.2);border:2px solid var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:-8px">JK</span>
+          </div>
+          <span style="font-size:12px;color:var(--text-secondary)">Join <strong style="color:var(--text-primary)">284 members</strong> online right now</span>
+        </div>
+        <div style="font-size:13px;color:var(--accent-yellow)">⭐⭐⭐⭐⭐ "Best betting tool in Africa" — Adebayo O.</div>
+
+        <!-- Live username preview -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Your profile will appear as</div>
+          <div class="user-preview-tag" id="usernamePreview">
+            <i class="fa fa-at" style="font-size:12px"></i>
+            <span id="usernamePreviewText">yourhandle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-title">Create Account</div>
+      <div class="auth-sub">7-day free trial · No credit card required</div>
+
+      <!-- Social signup -->
+      <button class="social-btn mb-8"><img src="https://www.google.com/favicon.ico" width="16" height="16" alt=""/> Continue with Google</button>
+
+      <div class="divider">or sign up with email</div>
+
+      <form id="registerForm" novalidate>
+        <div class="grid-2" style="gap:14px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" id="firstName" placeholder="John" required/>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" id="lastName" placeholder="Doe" required/>
+          </div>
+        </div>
+
+        <!-- Username field -->
+        <div class="form-group mt-16">
+          <label class="form-label">
+            Username
+            <span style="font-weight:400;color:var(--text-muted);font-size:10px;text-transform:none;letter-spacing:0;margin-left:6px">Used to sign in · visible to community</span>
+          </label>
+          <div class="username-wrap" style="position:relative">
+            <div class="username-at">@</div>
+            <input type="text" class="form-input username-input" id="username"
+              placeholder="yourhandle" required
+              maxlength="24"
+              autocomplete="off"
+              oninput="handleUsernameInput(this.value)"
+              style="padding-right:80px"/>
+            <span class="avail-badge avail-checking" id="availBadge" style="display:none"></span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:5px" id="usernameHint">
+            Letters, numbers and underscores only · 3–24 characters
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-wrap">
+            <input type="email" class="form-input" id="email" placeholder="john@example.com" required style="padding-left:36px"/>
+            <i class="fa fa-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px"></i>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <div style="display:flex;gap:8px">
+            <select class="form-input form-select" style="width:130px;flex-shrink:0">
+              <option value="+234">🇳🇬 +234</option>
+              <option value="+233">🇬🇭 +233</option>
+              <option value="+254">🇰🇪 +254</option>
+              <option value="+255">🇹🇿 +255</option>
+              <option value="+256">🇺🇬 +256</option>
+              <option value="+27">🇿🇦 +27</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+            </select>
+            <input type="tel" class="form-input flex-1" id="phone" placeholder="80 1234 5678" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Country</label>
+          <select class="form-input form-select" id="country">
+            <option value="">Select country...</option>
+            <option>Nigeria</option><option>Ghana</option><option>Kenya</option>
+            <option>Tanzania</option><option>Uganda</option><option>South Africa</option>
+            <option>United Kingdom</option><option>United States</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="password" placeholder="Min. 8 characters" required style="padding-right:40px" oninput="checkStrength(this.value)"/>
+            <span class="password-toggle" onclick="togglePass('password', this)"><i class="fa fa-eye"></i></span>
+          </div>
+          <div class="strength-bar" id="strengthBar">
+            <div class="strength-seg" id="s1"></div>
+            <div class="strength-seg" id="s2"></div>
+            <div class="strength-seg" id="s3"></div>
+            <div class="strength-seg" id="s4"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px" id="strengthLabel">Enter a password</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="confirmPass" placeholder="Repeat password" required style="padding-right:40px"/>
+            <span class="password-toggle" onclick="togglePass('confirmPass', this)"><i class="fa fa-eye"></i></span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;font-size:13px">
+          <input type="checkbox" id="terms" style="margin-top:2px;accent-color:var(--accent-cyan)"/>
+          <label for="terms" style="cursor:pointer;color:var(--text-secondary)">I agree to the <a href="#">Terms of Service</a>, <a href="#">Privacy Policy</a>, and confirm I am 18+ years old.</label>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:24px;font-size:13px">
+          <input type="checkbox" id="marketing" style="margin-top:2px;accent-color:var(--accent-cyan)" checked/>
+          <label for="marketing" style="cursor:pointer;color:var(--text-secondary)">Receive alerts for value bets and predictions via email/SMS</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-full btn-lg"><i class="fa fa-rocket"></i> Create Free Account</button>
+      </form>
+      <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted)">Already have an account? <a href="login.html" class="text-cyan">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<script src="js/main.js"></script>
+<script>
+function togglePass(id, el) {
+  const inp = document.getElementById(id);
+  const icon = el.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'fa fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'fa fa-eye';
+  }
+}
+
+function checkStrength(val) {
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const colors = ['#ef4444','#f59e0b','#fbbf24','#00ff88'];
+  const labels = ['Weak','Fair','Good','Strong'];
+  for (let i=1; i<=4; i++) {
+    const seg = document.getElementById('s'+i);
+    seg.style.background = i <= score ? colors[score-1] : 'var(--border)';
+  }
+  document.getElementById('strengthLabel').textContent = val ? labels[score-1] || 'Weak' : 'Enter a password';
+  document.getElementById('strengthLabel').style.color = score > 0 ? colors[score-1] : 'var(--text-muted)';
+}
+
+// ── Username availability check ──
+const TAKEN_USERNAMES = ['admin','oddsoracle','betking','sharpbettor','probet','crashking','valuehunter','tipster'];
+let usernameCheckTimer = null;
+let usernameValid = false;
+
+function handleUsernameInput(val) {
+  const badge  = document.getElementById('availBadge');
+  const hint   = document.getElementById('usernameHint');
+  const preview = document.getElementById('usernamePreviewText');
+  const previewTag = document.getElementById('usernamePreview');
+  const input  = document.getElementById('username');
+
+  // Clean value — only allow a-z 0-9 _
+  const cleaned = val.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+  if (cleaned !== val) {
+    input.value = cleaned;
+    val = cleaned;
+  }
+
+  // Update live preview
+  preview.textContent = val || 'yourhandle';
+  previewTag.style.opacity = val ? '1' : '0.5';
+
+  // Reset state
+  badge.style.display = 'none';
+  usernameValid = false;
+
+  if (!val) {
+    hint.textContent = 'Letters, numbers and underscores only · 3–24 characters';
+    hint.style.color = 'var(--text-muted)';
+    return;
+  }
+
+  if (val.length < 3) {
+    hint.textContent = `Too short — ${val.length}/3 characters minimum`;
+    hint.style.color = '#ef4444';
+    return;
+  }
+
+  // Show checking spinner
+  badge.className = 'avail-badge avail-checking';
+  badge.textContent = '⏳ Checking...';
+  badge.style.display = 'inline-flex';
+  hint.textContent = 'Checking availability...';
+  hint.style.color = 'var(--text-muted)';
+
+  clearTimeout(usernameCheckTimer);
+  usernameCheckTimer = setTimeout(() => {
+    const taken = TAKEN_USERNAMES.includes(val) || val.length > 24;
+    if (taken) {
+      badge.className = 'avail-badge avail-taken';
+      badge.textContent = '✕ Taken';
+      hint.textContent = `@${val} is already taken — try @${val}_ or @${val}${Math.floor(Math.random()*99)+1}`;
+      hint.style.color = '#ef4444';
+      usernameValid = false;
+    } else {
+      badge.className = 'avail-badge avail-ok';
+      badge.textContent = '✓ Available';
+      hint.textContent = `@${val} is available!`;
+      hint.style.color = 'var(--accent-green)';
+      usernameValid = true;
+    }
+  }, 600);
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const pass     = document.getElementById('password').value;
+  const confirm  = document.getElementById('confirmPass').value;
+  const terms    = document.getElementById('terms').checked;
+
+  if (!username)             { showToast('Please choose a username', 'error'); document.getElementById('username').focus(); return; }
+  if (username.length < 3)   { showToast('Username must be at least 3 characters', 'error'); return; }
+  if (!usernameValid)        { showToast('That username is not available — please choose another', 'error'); return; }
+  if (!email || !pass)       { showToast('Please fill all required fields', 'error'); return; }
+  if (pass !== confirm)      { showToast('Passwords do not match', 'error'); return; }
+  if (!terms)                { showToast('Please accept the terms of service', 'error'); return; }
+
+  const btn = this.querySelector('button[type=submit]');
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating @' + username + '...';
+  btn.disabled = true;
+
+  setTimeout(() => {
+    showToast(`Welcome to OddsOracle, @${username}! 🎉`, 'success');
+    setTimeout(() => window.location.href = 'predictions.html', 1600);
+  }, 1800);
+});
+</script>
+</body>
+</html>
