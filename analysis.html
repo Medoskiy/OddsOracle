@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Analysis — OddsOracle</title>
+<link rel="stylesheet" href="css/style.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+* { box-sizing: border-box; }
+
+body { background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+
+/* ── Page wrapper ── */
+.analysis-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+
+/* ── Back bar ── */
+.back-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0 8px;
+  margin-top: 70px;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.25);
+  border-radius: 8px;
+  color: var(--accent-cyan);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+.back-btn:hover { background: rgba(0,212,255,0.14); border-color: rgba(0,212,255,0.5); }
+
+/* ── Match hero ── */
+.match-hero {
+  background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(0,212,255,0.08));
+  border: 1px solid rgba(124,58,237,0.35);
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin: 12px 0 20px;
+  text-align: center;
+}
+.hero-league {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.hero-teams {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-primary);
+  word-break: break-word;
+  margin-bottom: 14px;
+}
+.hero-teams span.vs-sep {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 16px;
+}
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.hero-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+.badge-sport  { background: rgba(0,212,255,0.12); border:1px solid rgba(0,212,255,0.3); color: var(--accent-cyan); }
+.badge-pick   { background: rgba(0,255,136,0.1);  border:1px solid rgba(0,255,136,0.3); color: var(--accent-green); }
+.badge-conf   { background: rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.3); color: #a78bfa; }
+.badge-grade  { background: rgba(255,200,0,0.1); border:1px solid rgba(255,200,0,0.3); color: var(--accent-yellow); }
+
+/* ── Loading state ── */
+.loading-state {
+  background: rgba(124,58,237,0.08);
+  border: 1px solid rgba(124,58,237,0.25);
+  border-left: 3px solid #a78bfa;
+  border-radius: 12px;
+  padding: 24px 20px;
+  margin-top: 4px;
+}
+.loading-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #a78bfa;
+  margin-bottom: 16px;
+}
+.spin-icon { animation: spin 1s linear infinite; display: inline-block; }
+.skeleton-line {
+  height: 10px;
+  background: rgba(167,139,250,0.15);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  animation: pulse 1.4s ease infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Analysis result ── */
+.analysis-result { animation: fadeIn 0.4s ease; }
+
+/* Verdict banner */
+.verdict-banner {
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.verdict-icon { font-size: 32px; flex-shrink: 0; }
+.verdict-label {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.verdict-text { font-size: 22px; font-weight: 800; }
+
+/* Summary */
+.section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 16px;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.section-title i { color: var(--accent-cyan); }
+.summary-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* Factors grid */
+.factors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) { .factors-grid { grid-template-columns: 1fr; } }
+
+.factor-card {
+  background: rgba(0,212,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+.factor-name {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.factor-score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.factor-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 800;
+}
+.factor-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.factor-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.factor-note { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* Stake + Risk row */
+.stake-risk-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+@media (max-width: 380px) { .stake-risk-row { grid-template-columns: 1fr; } }
+
+.info-block {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+.info-block-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.info-block-value { font-size: 15px; font-weight: 700; }
+
+/* Error state */
+.error-state {
+  background: rgba(255,71,87,0.08);
+  border: 1px solid rgba(255,71,87,0.3);
+  border-radius: 12px;
+  padding: 24px 20px;
+  text-align: center;
+  color: #ff6b7a;
+}
+.error-state .err-icon { font-size: 36px; margin-bottom: 10px; }
+.error-state p { font-size: 13px; color: var(--text-secondary); margin-top: 8px; line-height: 1.6; }
+.retry-btn {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: rgba(255,71,87,0.1);
+  border: 1px solid rgba(255,71,87,0.4);
+  border-radius: 8px;
+  color: #ff6b7a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.retry-btn:hover { background: rgba(255,71,87,0.18); }
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .back-bar { margin-top: 64px; }
+  .match-hero { padding: 18px 14px; }
+  .hero-teams { font-size: 18px; }
+  .section-card { padding: 14px 12px; }
+  .verdict-banner { padding: 14px; gap: 10px; }
+  .verdict-text { font-size: 18px; }
+  .loading-state { padding: 18px 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div id="navbar-placeholder"></div>
+
+<div class="analysis-page">
+
+  <!-- Back button -->
+  <div class="back-bar">
+    <a class="back-btn" href="predictions.html">
+      <i class="fa fa-arrow-left"></i> Back to Predictions
+    </a>
+  </div>
+
+  <!-- Match hero — populated by JS -->
+  <div class="match-hero" id="matchHero">
+    <div class="hero-league" id="heroLeague">Loading…</div>
+    <div class="hero-teams" id="heroTeams">&nbsp;</div>
+    <div class="hero-badges" id="heroBadges"></div>
+  </div>
+
+  <!-- Analysis container -->
+  <div id="analysisContainer"></div>
+
+</div>
+
+<!-- Shared JS -->
+<script src="js/main.js"></script>
+<script>
+/* ════════════════════════════════════════════
+   ANALYSIS PAGE — reads URL params, calls Claude
+   ════════════════════════════════════════════ */
+
+/* Read URL params */
+function getParam(name) {
+  const u = new URLSearchParams(window.location.search);
+  const v = u.get(name);
+  return v ? decodeURIComponent(v) : '';
+}
+
+const match      = getParam('match');
+const home       = getParam('home');
+const away       = getParam('away');
+const sport      = getParam('sport');
+const league     = getParam('league');
+const confidence = parseInt(getParam('confidence'), 10) || 0;
+const grade      = getParam('grade') || 'C';
+const edge       = parseFloat(getParam('edge'))  || 0;
+const fair       = parseFloat(getParam('fair'))  || 0;
+const odds       = parseFloat(getParam('odds'))  || 0;
+const pick       = getParam('pick');
+const books      = parseInt(getParam('books'), 10) || 8;
+let   outcomes   = [];
+try { outcomes = JSON.parse(getParam('outcomes') || '[]'); } catch(e) { outcomes = []; }
+
+/* Update page title */
+if (home && away) {
+  document.title = home + ' vs ' + away + ' — OddsOracle AI Analysis';
+}
+
+/* ── Populate hero ── */
+function buildHero() {
+  const leagueEl = document.getElementById('heroLeague');
+  const teamsEl  = document.getElementById('heroTeams');
+  const badgesEl = document.getElementById('heroBadges');
+
+  if (leagueEl) leagueEl.textContent = league || sport || 'AI Analysis';
+  if (teamsEl) {
+    if (home && away) {
+      teamsEl.innerHTML = `${home} <span class="vs-sep">vs</span> ${away}`;
+    } else if (match) {
+      teamsEl.textContent = match;
+    }
+  }
+
+  if (badgesEl) {
+    const confColor = confidence >= 80 ? 'var(--accent-green)' : confidence >= 68 ? 'var(--accent-yellow)' : 'var(--accent-orange)';
+    badgesEl.innerHTML = `
+      ${sport   ? `<span class="hero-badge badge-sport">${sport}</span>` : ''}
+      ${pick    ? `<span class="hero-badge badge-pick">✓ ${pick}</span>` : ''}
+      ${confidence ? `<span class="hero-badge badge-conf" style="color:${confColor}">${confidence}% Confidence</span>` : ''}
+      ${grade   ? `<span class="hero-badge badge-grade">Grade ${grade}</span>` : ''}
+      ${edge > 0 ? `<span class="hero-badge" style="background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.3);color:var(--accent-green)">⚡ +${edge}% Edge</span>` : ''}
+    `;
+  }
+}
+
+/* ── Loading skeleton ── */
+function showLoading() {
+  document.getElementById('analysisContainer').innerHTML = `
+    <div class="loading-state">
+      <div class="loading-title">
+        <span class="spin-icon">🤖</span> Claude AI is analysing this match…
+      </div>
+      <div class="skeleton-line" style="width:78%"></div>
+      <div class="skeleton-line" style="width:95%;animation-delay:0.1s"></div>
+      <div class="skeleton-line" style="width:65%;animation-delay:0.2s"></div>
+      <div class="skeleton-line" style="width:88%;animation-delay:0.15s;margin-top:16px"></div>
+      <div class="skeleton-line" style="width:72%;animation-delay:0.25s"></div>
+      <div class="skeleton-line" style="width:50%;animation-delay:0.3s"></div>
+    </div>`;
+}
+
+/* ── Error state ── */
+function showError(msg) {
+  document.getElementById('analysisContainer').innerHTML = `
+    <div class="error-state">
+      <div class="err-icon">⚠️</div>
+      <div style="font-size:15px;font-weight:700">Analysis failed</div>
+      <p>${msg}</p>
+      <button class="retry-btn" onclick="runAnalysis()"><i class="fa fa-rotate-right"></i> Try Again</button>
+    </div>`;
+}
+
+/* ── Factor colour helper ── */
+function factorColor(score) {
+  if (score >= 8) return 'var(--accent-green)';
+  if (score >= 6) return 'var(--accent-yellow)';
+  if (score >= 4) return 'var(--accent-orange)';
+  return '#ff4757';
+}
+
+/* ── Render result ── */
+function renderResult(data) {
+  const verdictColors = { BET: 'var(--accent-green)', MONITOR: 'var(--accent-yellow)', PASS: '#ff4757' };
+  const verdictBg     = { BET: 'rgba(0,255,136,0.09)', MONITOR: 'rgba(255,200,0,0.09)', PASS: 'rgba(255,71,87,0.09)' };
+  const verdictBorder = { BET: 'rgba(0,255,136,0.3)',  MONITOR: 'rgba(255,200,0,0.3)',  PASS: 'rgba(255,71,87,0.3)' };
+  const verdictIcons  = { BET: '✅', MONITOR: '👁️', PASS: '❌' };
+  const verdictDesc   = { BET: 'Strong Signal — Place this bet', MONITOR: 'Watch closely — conditions may improve', PASS: 'Skip this match — risk outweighs reward' };
+
+  const col    = verdictColors[data.verdict] || 'var(--accent-cyan)';
+  const bg     = verdictBg[data.verdict]     || 'rgba(0,212,255,0.08)';
+  const border = verdictBorder[data.verdict] || 'rgba(0,212,255,0.25)';
+  const icon   = verdictIcons[data.verdict]  || '🤖';
+  const desc   = verdictDesc[data.verdict]   || '';
+
+  /* Factors */
+  const factorNames = ['Form', 'Head-to-Head', 'Odds Movement', 'Market Confidence', 'Statistical Edge', 'Risk'];
+  const factors = data.factors || {};
+  const factorKeys = Object.keys(factors);
+  let factorsHtml = '';
+  factorKeys.forEach(key => {
+    const f = factors[key];
+    const score = f.score || 0;
+    const note  = f.note  || '';
+    const fc    = factorColor(score);
+    factorsHtml += `
+      <div class="factor-card">
+        <div class="factor-name">${key}</div>
+        <div class="factor-score-row">
+          <span class="factor-score" style="color:${fc}">${score}</span>
+          <span style="font-size:11px;color:var(--text-muted)">/10</span>
+          <div class="factor-bar-wrap">
+            <div class="factor-bar-fill" style="width:${score*10}%;background:${fc}"></div>
+          </div>
+        </div>
+        <div class="factor-note">${note}</div>
+      </div>`;
+  });
+
+  const riskColors = { Low: 'var(--accent-green)', Medium: 'var(--accent-yellow)', High: '#ff4757' };
+  const rc = riskColors[data.risk_level] || 'var(--accent-cyan)';
+
+  document.getElementById('analysisContainer').innerHTML = `
+    <div class="analysis-result">
+
+      <!-- Verdict -->
+      <div class="verdict-banner" style="background:${bg};border:1px solid ${border}">
+        <div class="verdict-icon">${icon}</div>
+        <div>
+          <div class="verdict-label">Claude AI Verdict</div>
+          <div class="verdict-text" style="color:${col}">${data.verdict}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${desc}</div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="section-card">
+        <div class="section-title"><i class="fa fa-brain"></i> Analysis Summary</div>
+        <div class="summary-text">${data.summary || 'No summary available.'}</div>
+      </div>
+
+      <!-- Factors -->
+      ${factorKeys.length ? `
+      <div class="section-card">
+        <div class="section-title"><i class="fa fa-chart-bar"></i> 6-Factor Breakdown</div>
+        <div class="factors-grid">${factorsHtml}</div>
+      </div>` : ''}
+
+      <!-- Stake & Risk -->
+      <div class="stake-risk-row">
+        <div class="info-block">
+          <div class="info-block-label"><i class="fa fa-coins"></i> Stake Advice</div>
+          <div class="info-block-value" style="color:var(--accent-cyan)">${data.stake_advice || '—'}</div>
+        </div>
+        <div class="info-block">
+          <div class="info-block-label"><i class="fa fa-shield"></i> Risk Level</div>
+          <div class="info-block-value" style="color:${rc}">${data.risk_level || '—'}</div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div style="text-align:center;padding:16px 0 8px;font-size:11px;color:var(--text-muted);line-height:1.6">
+        Analysis powered by Claude AI · For informational purposes only<br>
+        Always bet responsibly within your means
+      </div>
+    </div>`;
+}
+
+/* ── Fetch analysis from Claude ── */
+async function runAnalysis() {
+  showLoading();
+
+  const payload = {
+    match,
+    home,
+    away,
+    sport,
+    league,
+    confidence,
+    grade,
+    edge,
+    fair_prob:  fair,
+    best_odds:  odds,
+    pick,
+    book_count: books,
+    outcomes,
+  };
+
+  try {
+    const res  = await fetch('api/claude.php', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      renderResult(data);
+    } else {
+      showError(data.message || 'Claude returned an error. Please try again.');
+    }
+  } catch (e) {
+    showError('Could not reach the server. Check your connection and try again.');
+  }
+}
+
+/* ── Boot ── */
+buildHero();
+if (!match && !home) {
+  showError('No match data provided. Please go back and tap "Get Claude AI Analysis" on a match card.');
+} else {
+  runAnalysis();
+}
+</script>
+</body>
+</html>

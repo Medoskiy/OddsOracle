@@ -299,6 +299,7 @@
 
         <!-- Claude + Save buttons -->
         <button class="claude-analyse-btn"
+          onclick="event.stopPropagation();OddsEngine.openAnalysis(this)"
           data-match="${encodeURIComponent(ev.match)}"
           data-home="${encodeURIComponent(ev.home)}"
           data-away="${encodeURIComponent(ev.away)}"
@@ -312,9 +313,7 @@
           data-pick="${encodeURIComponent(ev.recommended.name)}"
           data-books="${ev.bookCount}"
           data-outcomes="${encodeURIComponent(JSON.stringify(ev.outcomes))}"
-          data-event-id="${ev.id}"
-          onclick="OddsEngine.analyseWithClaude(this,event)"
-          style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
+          style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:13px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
                  cursor:pointer;transition:all 0.2s;
@@ -340,11 +339,6 @@
         </button>
       </div>
 
-      <!-- Claude AI dropdown panel — full width below the card content -->
-      <div class="claude-dropdown" id="cr-${ev.id}"
-           style="display:none;overflow:hidden;transition:max-height 0.4s ease,opacity 0.3s ease;
-                  max-height:0;opacity:0;margin-top:0">
-      </div>
     </div>`;
   }
 
@@ -518,201 +512,24 @@
      CLAUDE AI ANALYSIS
      ══════════════════════════════════════════════════ */
 
-  async function analyseWithClaude(btn, evt) {
-    /* Stop click bubbling to card */
-    if (evt && evt.stopPropagation) evt.stopPropagation();
-    else if (window.event) window.event.cancelBubble = true;
-
-    /* Find or create the dropdown panel right after the button */
-    let resultBox = btn.nextElementSibling;
-    if (!resultBox || !resultBox.classList.contains('claude-dropdown')) {
-      resultBox = document.createElement('div');
-      resultBox.className = 'claude-dropdown';
-      resultBox.style.cssText = 'overflow:hidden;max-height:0;opacity:0;margin-top:0;box-sizing:border-box;width:100%';
-      btn.parentNode.insertBefore(resultBox, btn.nextSibling);
-    }
-
-    /* If already loaded — toggle open/close */
-    if (btn.dataset.loaded === '1') {
-      const isOpen = parseFloat(resultBox.style.maxHeight) > 0;
-      if (isOpen) {
-        collapseDropdown(resultBox);
-        btn.innerHTML = '🤖 Show Claude AI Analysis ▼';
-      } else {
-        expandDropdown(resultBox);
-        btn.innerHTML = '🤖 Hide Claude AI Analysis ▲';
-        setTimeout(() => resultBox.scrollIntoView({ behavior:'smooth', block:'nearest' }), 350);
-      }
-      return;
-    }
-
-    /* Disable button and show loading */
-    btn.disabled  = true;
-    btn.innerHTML = '🤖 Analysing with Claude AI…';
-
-    /* Show loading skeleton */
-    resultBox.innerHTML = `
-      <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);
-                  border-left:3px solid #a78bfa;border-radius:10px;padding:16px;margin-top:10px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <span style="color:#a78bfa;font-size:13px;font-weight:700;letter-spacing:0.5px">🤖 Claude is analysing this match…</span>
-        </div>
-        <div style="height:10px;background:rgba(167,139,250,0.15);border-radius:4px;width:75%;margin-bottom:8px"></div>
-        <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:8px"></div>
-        <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:60%"></div>
-      </div>
-      <style>
-        .claude-dropdown { display:block !important; }
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .claude-dropdown > div > div[style*="height:10px"] { animation:pulse 1.2s ease infinite; }
-      </style>`;
-    expandDropdown(resultBox);
-    }
-
-    /* Build payload */
-    const payload = {
-      match:      decodeURIComponent(btn.dataset.match),
-      home:       decodeURIComponent(btn.dataset.home),
-      away:       decodeURIComponent(btn.dataset.away),
-      sport:      decodeURIComponent(btn.dataset.sport),
-      league:     decodeURIComponent(btn.dataset.league),
-      confidence: parseInt(btn.dataset.confidence, 10),
-      grade:      btn.dataset.grade,
-      edge:       parseFloat(btn.dataset.edge),
-      fair_prob:  parseFloat(btn.dataset.fair),
-      best_odds:  parseFloat(btn.dataset.odds),
-      pick:       decodeURIComponent(btn.dataset.pick),
-      book_count: parseInt(btn.dataset.books, 10) || 8,
-      outcomes:   btn.dataset.outcomes ? JSON.parse(decodeURIComponent(btn.dataset.outcomes)) : [],
-    };
-
-    try {
-      const res  = await fetch('api/claude.php', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        renderClaudeResult(resultBox, data);
-        expandDropdown(resultBox);
-        btn.disabled       = false;
-        btn.dataset.loaded = '1';
-        btn.innerHTML      = '🤖 Hide Claude AI Analysis ▲';
-        btn.style.background  = 'rgba(124,58,237,0.15)';
-        btn.style.borderColor = 'rgba(167,139,250,0.5)';
-        btn.style.color       = '#c4b5fd';
-        /* Scroll into view on mobile */
-        setTimeout(() => {
-          if (resultBox) resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 350);
-      } else {
-        collapseDropdown(resultBox);
-        btn.disabled  = false;
-        btn.innerHTML = '🤖 Get Claude AI Analysis';
-        showSaveToast('Claude error: ' + (data.message || 'Unknown error'), 'error');
-      }
-    } catch (e) {
-      collapseDropdown(resultBox);
-      btn.disabled  = false;
-      btn.innerHTML = '🤖 Get Claude AI Analysis';
-      showSaveToast('Network error. Please try again.', 'error');
-    }
-  }
-
-  function expandDropdown(el) {
-    if (!el) return;
-    el.style.display   = 'block';
-    el.style.maxHeight = '0';
-    el.style.opacity   = '0';
-    requestAnimationFrame(() => {
-      el.style.transition = 'max-height 0.45s ease, opacity 0.3s ease, margin-top 0.3s ease';
-      el.style.maxHeight  = '2000px';
-      el.style.opacity    = '1';
-      el.style.marginTop  = '12px';
+  /* Navigate to the dedicated full-screen analysis page */
+  function openAnalysis(btn) {
+    const params = new URLSearchParams({
+      match:      btn.dataset.match      || '',
+      home:       btn.dataset.home       || '',
+      away:       btn.dataset.away       || '',
+      sport:      btn.dataset.sport      || '',
+      league:     btn.dataset.league     || '',
+      confidence: btn.dataset.confidence || '',
+      grade:      btn.dataset.grade      || '',
+      edge:       btn.dataset.edge       || '',
+      fair:       btn.dataset.fair       || '',
+      odds:       btn.dataset.odds       || '',
+      pick:       btn.dataset.pick       || '',
+      books:      btn.dataset.books      || '',
+      outcomes:   btn.dataset.outcomes   || '',
     });
-  }
-
-  function collapseDropdown(el) {
-    if (!el) return;
-    el.style.transition = 'max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease';
-    el.style.maxHeight  = '0';
-    el.style.opacity    = '0';
-    el.style.marginTop  = '0';
-    setTimeout(() => { if (el) el.style.display = 'none'; }, 360);
-  }
-
-  function renderClaudeResult(box, data) {
-    if (!box) return;
-
-    const verdictColors = { BET: 'var(--accent-green)', MONITOR: 'var(--accent-yellow)', PASS: '#ff4757' };
-    const verdictBg     = { BET: 'rgba(0,255,136,0.08)', MONITOR: 'rgba(255,200,0,0.08)', PASS: 'rgba(255,71,87,0.08)' };
-    const verdictIcons  = { BET: '✅', MONITOR: '👁', PASS: '❌' };
-    const riskColors    = { Low: 'var(--accent-green)', Medium: 'var(--accent-yellow)', High: '#ff4757' };
-
-    const col  = verdictColors[data.verdict]  || 'var(--accent-cyan)';
-    const bg   = verdictBg[data.verdict]      || 'rgba(0,212,255,0.08)';
-    const icon = verdictIcons[data.verdict]   || '🤖';
-
-    /* Factors */
-    let factorsHtml = '';
-    if (data.factors && data.factors.length) {
-      factorsHtml = `<div style="margin-top:12px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-muted);
-                    text-transform:uppercase;margin-bottom:8px">6-Factor Analysis</div>`;
-      data.factors.forEach(f => {
-        const sc  = f.signal === 'Strong' ? 'var(--accent-green)' : f.signal === 'Neutral' ? 'var(--accent-yellow)' : '#ff4757';
-        const arr = f.signal === 'Strong' ? '▲' : f.signal === 'Neutral' ? '●' : '▼';
-        factorsHtml += `<div style="display:flex;align-items:flex-start;justify-content:space-between;
-                            padding:7px 0;border-bottom:1px solid rgba(30,45,61,0.4);gap:8px">
-          <div>
-            <div style="font-size:12px;font-weight:600">${f.name}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${f.detail}</div>
-          </div>
-          <span style="font-size:11px;font-weight:700;color:${sc};white-space:nowrap;flex-shrink:0">${arr} ${f.signal}</span>
-        </div>`;
-      });
-      factorsHtml += '</div>';
-    }
-
-    box.innerHTML = `
-      <div style="background:${bg};border:1px solid ${col}44;border-left:3px solid ${col};
-                  border-radius:0 0 12px 12px;padding:16px;border-top:none">
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:14px">🤖</span>
-            <span style="font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:1px;text-transform:uppercase">Claude AI Verdict</span>
-          </div>
-          <span style="font-size:10px;color:var(--text-muted)">${data.model || 'claude-3-5-haiku'}</span>
-        </div>
-
-        <!-- Verdict badge -->
-        <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
-                    background:${bg};border:1px solid ${col}55;border-radius:8px;
-                    margin-bottom:12px">
-          <span style="font-size:16px">${icon}</span>
-          <span style="font-size:16px;font-weight:900;color:${col};letter-spacing:2px">${data.verdict}</span>
-          <span style="font-size:11px;color:var(--text-muted);border-left:1px solid var(--border);padding-left:10px">
-            Risk: <strong style="color:${riskColors[data.risk_level] || col}">${data.risk_level}</strong>
-          </span>
-        </div>
-
-        <!-- Summary -->
-        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">
-          ${data.summary}
-        </div>
-
-        <!-- Stake advice -->
-        ${data.stake_advice ? `<div style="padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:6px;
-            font-size:12px;color:var(--accent-cyan);margin-bottom:2px">
-          💰 <strong>Stake Advice:</strong> ${data.stake_advice}
-        </div>` : ''}
-
-        ${factorsHtml}
-      </div>`;
+    window.location.href = 'analysis.html?' + params.toString();
   }
 
   /* ══════════════════════════════════════════════════
@@ -811,7 +628,7 @@
     getEvents:        () => allEvents,
     isLive:           () => isLive,
     savePick,
-    analyseWithClaude,
+    openAnalysis,
   };
 
 })();

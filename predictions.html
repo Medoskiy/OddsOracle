@@ -704,7 +704,7 @@ function renderEvents(filter = 'all', valueOnly = false) {
           data-pick="${encodeURIComponent(p.predicted)}"
           data-books="19"
           data-outcomes="${encodeURIComponent(JSON.stringify(p.outcomes.map((o,i)=>({name:o,bestOdds:p.bestOdds[i],fairProb:Math.round(p.adjProbs[i]*100),edge:+(p.edge*(i===p.predIdx?1:-0.4)).toFixed(1),isValue:i===p.predIdx&&p.isValue}))))}"
-          onclick="event.stopPropagation(); OddsEngine && OddsEngine.analyseWithClaude ? OddsEngine.analyseWithClaude(this,event) : alert('Please wait for live data to load.')"
+          onclick="event.stopPropagation(); OddsEngine && OddsEngine.openAnalysis ? OddsEngine.openAnalysis(this) : alert('Please wait for live data to load.')"
           style="margin-top:10px;width:100%;padding:10px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
