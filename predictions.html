@@ -150,7 +150,7 @@
   .filter-bar > div:last-child { width: 100%; justify-content: space-between; gap: 8px; }
 
   /* ── Event cards ── */
-  .event-card { padding: 13px; margin-bottom: 10px; overflow: hidden; }
+  .event-card { padding: 13px; margin-bottom: 10px; overflow: visible; }
   .event-card:hover { transform: none; }
   .event-teams { font-size: 13px !important; line-height: 1.3; word-break: break-word; }
   .event-meta { gap: 5px; flex-wrap: wrap; }
@@ -182,7 +182,7 @@
   .stat-lbl { font-size: 8px !important; }
 
   /* Event cards — stack header */
-  .event-card { padding: 11px; margin-bottom: 10px; border-radius: 10px; }
+  .event-card { padding: 11px; margin-bottom: 10px; border-radius: 10px; overflow: visible; }
   .event-header { flex-direction: column !important; gap: 6px; }
   .event-header > div:last-child { flex-direction: row !important; align-items: center !important;
     width: 100%; gap: 8px !important; }
@@ -212,7 +212,7 @@
 
 /* ── Small mobile (≤360px) ── */
 @media (max-width: 360px) {
-  .event-card { padding: 9px; }
+  .event-card { padding: 9px; overflow: visible; }
   .event-teams { font-size: 11px !important; }
   .pred-outcome { font-size: 12px !important; }
   .odds-cell .odds-val { font-size: 10px; }
@@ -225,7 +225,6 @@
 .main-layout,
 .main-layout > *,
 .card,
-.event-card,
 .crash-section,
 .stats-bar,
 #crawlerStatus,
@@ -234,6 +233,8 @@
   max-width: 100%;
   box-sizing: border-box;
 }
+/* event-card must stay overflow:visible so dropdown and buttons aren't clipped */
+.event-card { max-width: 100%; box-sizing: border-box; }
 
 /* Claude + Save buttons — always full width and never overflow */
 .claude-analyse-btn,
@@ -243,6 +244,13 @@
   box-sizing: border-box !important;
   white-space: normal !important;
   word-break: break-word;
+}
+
+/* Claude AI dropdown — always visible, never clipped */
+.claude-dropdown {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 /* On mobile ensure pred-box children don't stretch card */
@@ -255,6 +263,7 @@
   /* Claude result box — ensure visible and readable */
   .claude-result { display: block; overflow: visible !important; }
   .claude-result > div { overflow: visible !important; }
+  .claude-dropdown { overflow: visible !important; width: 100% !important; }
   /* Prevent crawlerStatus from overflowing */
   #crawlerStatus { grid-template-columns: repeat(3, 1fr) !important; }
 }
@@ -695,7 +704,7 @@ function renderEvents(filter = 'all', valueOnly = false) {
           data-pick="${encodeURIComponent(p.predicted)}"
           data-books="19"
           data-outcomes="${encodeURIComponent(JSON.stringify(p.outcomes.map((o,i)=>({name:o,bestOdds:p.bestOdds[i],fairProb:Math.round(p.adjProbs[i]*100),edge:+(p.edge*(i===p.predIdx?1:-0.4)).toFixed(1),isValue:i===p.predIdx&&p.isValue}))))}"
-          onclick="OddsEngine && OddsEngine.analyseWithClaude ? OddsEngine.analyseWithClaude(this) : alert('Please wait for live data to load.')"
+          onclick="event.stopPropagation(); OddsEngine && OddsEngine.analyseWithClaude ? OddsEngine.analyseWithClaude(this,event) : alert('Please wait for live data to load.')"
           style="margin-top:10px;width:100%;padding:10px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
@@ -713,7 +722,7 @@ function renderEvents(filter = 'all', valueOnly = false) {
           data-pick="${encodeURIComponent(p.predicted)}"
           data-odds="${p.bestOdds[p.predIdx]}"
           data-conf="${p.conf}"
-          onclick="OddsEngine && OddsEngine.savePick ? OddsEngine.savePick(this) : alert('Please refresh the page.')"
+          onclick="event.stopPropagation(); OddsEngine && OddsEngine.savePick ? OddsEngine.savePick(this) : alert('Please refresh the page.')"
           style="margin-top:8px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
                  border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
                  font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;

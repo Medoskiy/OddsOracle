@@ -313,7 +313,7 @@
           data-books="${ev.bookCount}"
           data-outcomes="${encodeURIComponent(JSON.stringify(ev.outcomes))}"
           data-event-id="${ev.id}"
-          onclick="OddsEngine.analyseWithClaude(this)"
+          onclick="OddsEngine.analyseWithClaude(this,event)"
           style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
@@ -330,7 +330,7 @@
           data-pick="${safePick}"
           data-odds="${odds}"
           data-conf="${conf}"
-          onclick="OddsEngine.savePick(this)"
+          onclick="event.stopPropagation();OddsEngine.savePick(this)"
           style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
                  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
                  border-radius:8px;color:var(--accent-cyan);font-size:13px;font-weight:700;
@@ -518,21 +518,30 @@
      CLAUDE AI ANALYSIS
      ══════════════════════════════════════════════════ */
 
-  async function analyseWithClaude(btn) {
-    const eventCard = btn.closest('.event-card');
-    const eventId   = btn.dataset.eventId;
-    const resultBox = eventCard ? eventCard.querySelector('.claude-dropdown') : null;
+  async function analyseWithClaude(btn, evt) {
+    /* Stop click bubbling to card */
+    if (evt && evt.stopPropagation) evt.stopPropagation();
+    else if (window.event) window.event.cancelBubble = true;
+
+    /* Find or create the dropdown panel right after the button */
+    let resultBox = btn.nextElementSibling;
+    if (!resultBox || !resultBox.classList.contains('claude-dropdown')) {
+      resultBox = document.createElement('div');
+      resultBox.className = 'claude-dropdown';
+      resultBox.style.cssText = 'overflow:hidden;max-height:0;opacity:0;margin-top:0;box-sizing:border-box;width:100%';
+      btn.parentNode.insertBefore(resultBox, btn.nextSibling);
+    }
 
     /* If already loaded — toggle open/close */
     if (btn.dataset.loaded === '1') {
-      const isOpen = resultBox && resultBox.style.display !== 'none';
+      const isOpen = parseFloat(resultBox.style.maxHeight) > 0;
       if (isOpen) {
         collapseDropdown(resultBox);
         btn.innerHTML = '🤖 Show Claude AI Analysis ▼';
       } else {
         expandDropdown(resultBox);
         btn.innerHTML = '🤖 Hide Claude AI Analysis ▲';
-        setTimeout(() => resultBox && resultBox.scrollIntoView({ behavior:'smooth', block:'nearest' }), 350);
+        setTimeout(() => resultBox.scrollIntoView({ behavior:'smooth', block:'nearest' }), 350);
       }
       return;
     }
@@ -542,20 +551,23 @@
     btn.innerHTML = '🤖 Analysing with Claude AI…';
 
     /* Show loading skeleton */
-    if (resultBox) {
-      resultBox.style.display = 'block';
-      resultBox.innerHTML = `
-        <div style="margin-top:12px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
-                    border-left:3px solid #a78bfa;border-radius:10px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <span style="color:#a78bfa;font-size:13px;font-weight:700">🤖 Claude is analysing this match…</span>
-          </div>
-          <div style="height:10px;background:rgba(167,139,250,0.15);border-radius:4px;width:80%;margin-bottom:8px;animation:pulse 1.2s ease infinite"></div>
-          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:8px;animation:pulse 1.2s ease infinite 0.1s"></div>
-          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:70%;animation:pulse 1.2s ease infinite 0.2s"></div>
+    resultBox.innerHTML = `
+      <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.25);
+                  border-left:3px solid #a78bfa;border-radius:10px;padding:16px;margin-top:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="color:#a78bfa;font-size:13px;font-weight:700;letter-spacing:0.5px">🤖 Claude is analysing this match…</span>
         </div>
-        <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}@keyframes spin{to{transform:rotate(360deg)}}</style>`;
-      expandDropdown(resultBox);
+        <div style="height:10px;background:rgba(167,139,250,0.15);border-radius:4px;width:75%;margin-bottom:8px"></div>
+        <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:8px"></div>
+        <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:60%"></div>
+      </div>
+      <style>
+        .claude-dropdown { display:block !important; }
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .claude-dropdown > div > div[style*="height:10px"] { animation:pulse 1.2s ease infinite; }
+      </style>`;
+    expandDropdown(resultBox);
     }
 
     /* Build payload */
@@ -571,8 +583,8 @@
       fair_prob:  parseFloat(btn.dataset.fair),
       best_odds:  parseFloat(btn.dataset.odds),
       pick:       decodeURIComponent(btn.dataset.pick),
-      book_count: parseInt(btn.dataset.books, 10),
-      outcomes:   JSON.parse(decodeURIComponent(btn.dataset.outcomes)),
+      book_count: parseInt(btn.dataset.books, 10) || 8,
+      outcomes:   btn.dataset.outcomes ? JSON.parse(decodeURIComponent(btn.dataset.outcomes)) : [],
     };
 
     try {
