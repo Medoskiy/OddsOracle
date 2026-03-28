@@ -531,27 +531,9 @@
      ══════════════════════════════════════════════════ */
 
   async function savePick(btn) {
-    /* Check cached auth first */
-    let loggedIn = false;
-    try {
-      const cached = sessionStorage.getItem('oo_auth');
-      if (cached) loggedIn = JSON.parse(cached).logged_in;
-    } catch (e) {}
-
-    if (!loggedIn) {
-      /* Verify with server */
-      try {
-        const r    = await fetch('api/auth-check.php');
-        const data = await r.json();
-        loggedIn   = data.logged_in;
-      } catch (e) {}
-    }
-
-    if (!loggedIn) {
-      /* Redirect to login — more reliable than a toast on mobile */
-      window.location.href = 'login.html';
-      return;
-    }
+    /* Optimistically attempt the save — save-prediction.php returns 401 if not logged in.
+       This avoids a redundant auth-check round-trip that can fail on mobile due to
+       cookie/session timing, causing a false logout redirect. */
 
     /* Grab data from button attributes */
     const payload = {
@@ -569,22 +551,31 @@
 
     try {
       const res  = await fetch('api/save-prediction.php', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
+        method:      'POST',
+        credentials: 'same-origin',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify(payload),
       });
+
+      /* 401 = not logged in — redirect to login */
+      if (res.status === 401) {
+        window.location.href = 'login.html';
+        return;
+      }
+
       const data = await res.json();
 
       if (data.success) {
         btn.innerHTML  = '<i class="fa fa-check"></i> Saved!';
-        btn.style.background    = 'rgba(0,255,136,0.1)';
-        btn.style.borderColor   = 'rgba(0,255,136,0.35)';
-        btn.style.color         = 'var(--accent-green)';
-        showSaveToast('Pick saved! Track it in your <a href="my-predictions.html" style="color:var(--accent-cyan)">predictions page</a>.', 'success');
+        btn.style.background  = 'rgba(0,255,136,0.1)';
+        btn.style.borderColor = 'rgba(0,255,136,0.35)';
+        btn.style.color       = 'var(--accent-green)';
+        showSaveToast('Pick saved! View it in <a href="my-predictions.html" style="color:var(--accent-cyan)">My Predictions</a>.', 'success');
       } else if (data.duplicate) {
-        btn.innerHTML  = '<i class="fa fa-check"></i> Already Saved';
+        btn.innerHTML = '<i class="fa fa-check"></i> Already Saved';
         btn.style.color = 'var(--text-muted)';
-        showSaveToast(data.message, 'info');
+        btn.disabled    = false;
+        showSaveToast('Already in your predictions list.', 'info');
       } else {
         btn.disabled  = false;
         btn.innerHTML = '<i class="fa fa-bookmark"></i> Save This Pick';
