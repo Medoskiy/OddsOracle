@@ -957,13 +957,15 @@ function renderCrawlerStatus() {
 // ── Sport tabs, value filter & refresh are handled by live-odds.js ──
 // Fallback: if live-odds.js not loaded yet, show simulated events
 document.getElementById('refreshBtn').addEventListener('click', function() {
-  /* Scroll to events list so the user can see the results */
-  const evList = document.getElementById('eventsList');
-  if (evList) evList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  /* Flash the button so the user knows the tap registered */
+  this.style.opacity = '0.5';
+  var btn = this;
+  setTimeout(function() { btn.style.opacity = ''; }, 400);
 
   if (window.OddsEngine) {
     window.OddsEngine.refresh();
   } else {
+    var evList = document.getElementById('eventsList');
     if (evList) evList.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-spinner fa-spin" style="font-size:24px;margin-bottom:12px"></i><p>Rescanning sportsbooks...</p></div>';
     setTimeout(() => renderEvents(activeSport, document.getElementById('valueOnly').checked), 800);
   }
