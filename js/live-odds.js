@@ -316,7 +316,7 @@
           data-pick="${safePick}"
           data-odds="${odds}"
           data-conf="${conf}"
-          onclick="event.stopPropagation();OddsEngine.savePick(this)"
+          onclick="OddsEngine.savePick(this)"
           style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
                  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
                  border-radius:8px;color:var(--accent-cyan);font-size:13px;font-weight:700;
@@ -541,7 +541,8 @@
     }
 
     if (!loggedIn) {
-      showSaveToast('Please <a href="login.html" style="color:var(--accent-cyan)">log in</a> to save picks.', 'warn');
+      /* Redirect to login — more reliable than a toast on mobile */
+      window.location.href = 'login.html';
       return;
     }
 
