@@ -6,122 +6,173 @@
 <title>My Predictions — OddsOracle</title>
 <link rel="stylesheet" href="css/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
+* { box-sizing: border-box; }
 .page-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 60px; }
 
-/* Header */
-.mp-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
-.mp-header h1 { font-size: 26px; margin: 0; }
-.mp-header p  { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0; }
+/* ── Header ── */
+.mp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
+.mp-header h1 { font-size: 26px; margin: 0 0 4px; }
+.mp-header p  { font-size: 13px; color: var(--text-secondary); margin: 0; }
 
-/* Stats row */
-.mp-stats { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 28px; }
-.mp-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
-.mp-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; }
-.mp-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-/* Filter bar */
-.mp-filters {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  margin-bottom: 20px;
+/* ── Stats grid ── */
+.mp-stats { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-bottom: 24px; }
+.mp-stat {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 12px; text-align: center; transition: border-color 0.2s;
 }
+.mp-stat:hover { border-color: var(--border-bright); }
+.mp-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; line-height: 1; margin-bottom: 6px; }
+.mp-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.mp-stat-icon { font-size: 18px; margin-bottom: 8px; opacity: 0.7; }
+
+/* ── Chart card ── */
+.chart-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px; margin-bottom: 24px;
+}
+.chart-title { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.chart-title i { color: var(--accent-cyan); }
+.chart-wrap { position: relative; height: 140px; }
+
+/* ── Filters ── */
+.mp-filters {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.filter-label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 .filter-chip {
-  padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 600;
   background: var(--bg-secondary); border: 1px solid var(--border);
   color: var(--text-secondary); cursor: pointer; transition: var(--transition);
 }
 .filter-chip:hover  { border-color: var(--accent-cyan); color: var(--text-primary); }
 .filter-chip.active { background: rgba(0,212,255,0.1); border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 
-/* Table */
+/* ── Table ── */
 .pred-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
 .pred-table-head {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 80px 80px 120px 110px;
+  grid-template-columns: 2fr 1fr 1.4fr 70px 70px 110px 120px;
   gap: 8px; padding: 12px 20px;
   background: var(--bg-secondary); border-bottom: 1px solid var(--border);
   font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
 }
 .pred-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.2fr 80px 80px 120px 110px;
+  grid-template-columns: 2fr 1fr 1.4fr 70px 70px 110px 120px;
   gap: 8px; padding: 14px 20px;
   border-bottom: 1px solid var(--border); align-items: center;
   transition: background 0.15s;
 }
 .pred-row:last-child { border-bottom: none; }
 .pred-row:hover { background: rgba(255,255,255,0.02); }
+.pred-row.row-win  { border-left: 3px solid var(--accent-green); }
+.pred-row.row-loss { border-left: 3px solid #ff4757; }
+.pred-row.row-pending { border-left: 3px solid var(--accent-yellow); }
 
-.match-name { font-size: 13px; font-weight: 600; }
-.match-league { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.sport-tag { font-size: 11px; color: var(--text-secondary); }
-.pick-text { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-.odds-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--accent-cyan); }
-.conf-cell { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+.match-name   { font-size: 13px; font-weight: 600; }
+.match-meta   { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.sport-badge  { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(0,212,255,0.08); color: var(--accent-cyan); border: 1px solid rgba(0,212,255,0.2); }
+.pick-text    { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.odds-mono    { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: var(--accent-cyan); }
+.conf-cell    { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
 
 .result-badge {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 4px 10px; border-radius: 6px;
+  padding: 5px 10px; border-radius: 6px;
   font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.result-badge.win     { background: rgba(0,255,136,0.12); color: var(--accent-green); }
-.result-badge.loss    { background: rgba(255,71,87,0.12);  color: #ff4757; }
-.result-badge.pending { background: rgba(255,200,0,0.12);  color: var(--accent-yellow); }
+.result-badge.win     { background: rgba(0,255,136,0.12);  border: 1px solid rgba(0,255,136,0.3);  color: var(--accent-green); }
+.result-badge.loss    { background: rgba(255,71,87,0.12);   border: 1px solid rgba(255,71,87,0.3);   color: #ff4757; }
+.result-badge.pending { background: rgba(255,200,0,0.12);   border: 1px solid rgba(255,200,0,0.3);   color: var(--accent-yellow); }
 
-/* Update result buttons */
-.result-btns { display: flex; gap: 6px; }
+.pnl-text { font-size: 11px; margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+/* Mark result buttons */
+.result-btns { display: flex; gap: 5px; flex-wrap: wrap; }
 .res-btn {
-  padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 700;
+  padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;
   cursor: pointer; transition: var(--transition); border: 1px solid transparent;
+  display: inline-flex; align-items: center; gap: 4px;
 }
-.res-btn.win-btn  { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); color: var(--accent-green); }
-.res-btn.loss-btn { background: rgba(255,71,87,0.1); border-color: rgba(255,71,87,0.3); color: #ff4757; }
-.res-btn:hover    { transform: scale(1.05); }
+.res-btn.win-btn  { background: rgba(0,255,136,0.1);  border-color: rgba(0,255,136,0.35); color: var(--accent-green); }
+.res-btn.loss-btn { background: rgba(255,71,87,0.1);  border-color: rgba(255,71,87,0.35);  color: #ff4757; }
+.res-btn:hover    { transform: scale(1.05); filter: brightness(1.2); }
 .res-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-/* Empty state */
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-.empty-state i { font-size: 40px; margin-bottom: 14px; display: block; opacity: 0.35; }
+.settled-text { font-size: 11px; color: var(--text-muted); font-style: italic; }
 
 /* Pagination */
-.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 20px; }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; flex-wrap: wrap; }
 .page-btn { padding: 6px 14px; border-radius: 6px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; font-size: 13px; transition: var(--transition); }
 .page-btn:hover   { border-color: var(--accent-cyan); color: var(--text-primary); }
 .page-btn.active  { background: rgba(0,212,255,0.1); border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: 700; }
 .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* Responsive */
-@media (max-width: 900px) {
-  .mp-stats { grid-template-columns: repeat(3,1fr); }
-  .pred-table-head,
-  .pred-row { grid-template-columns: 1.8fr 1fr 1fr 70px 90px 100px; }
-  .pred-table-head > *:nth-child(4),
-  .pred-row > *:nth-child(4) { display: none; }
+/* Empty / loading */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 14px; display: block; opacity: 0.35; }
+.empty-state p { font-size: 14px; margin: 8px 0 0; }
+
+/* Streak banner */
+.streak-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; border-radius: 10px; margin-bottom: 16px;
+  font-size: 13px; font-weight: 600;
 }
-@media (max-width: 640px) {
+.streak-banner.streak-win  { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.25); color: var(--accent-green); }
+.streak-banner.streak-loss { background: rgba(255,71,87,0.08);  border: 1px solid rgba(255,71,87,0.25);  color: #ff4757; }
+
+/* ── Mobile ── */
+@media (max-width: 1024px) {
+  .mp-stats { grid-template-columns: repeat(3,1fr); }
+}
+@media (max-width: 768px) {
   .page-wrap { padding: 80px 14px 40px; }
-  .mp-stats { grid-template-columns: repeat(2,1fr); }
+  .mp-stats { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .mp-stat { padding: 12px 8px; }
+  .mp-stat-val { font-size: 18px; }
+  .mp-stat-lbl { font-size: 9px; }
+  .mp-stat-icon { font-size: 14px; margin-bottom: 5px; }
   .pred-table-head { display: none; }
-  .pred-row { grid-template-columns: 1fr; gap: 6px; padding: 16px; }
-  .pred-row > * { display: block; }
+  .pred-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 10px; padding: 14px;
+    border-left-width: 3px !important;
+  }
+  /* Match name spans full width */
+  .pred-row > div:nth-child(1) { grid-column: 1 / -1; }
+  /* Result and PNL on same row */
+  .pred-row > div:nth-child(6) { grid-column: 1; }
+  /* Buttons on same row */
+  .pred-row > div:nth-child(7) { grid-column: 2; justify-self: end; }
+  .chart-wrap { height: 110px; }
+}
+@media (max-width: 480px) {
+  .mp-stats { grid-template-columns: repeat(2,1fr); }
+  .mp-stat:last-child { grid-column: 1 / -1; }
+  .pred-row { grid-template-columns: 1fr; }
+  .pred-row > div:nth-child(7) { justify-self: start; }
+  .mp-header { flex-direction: column; gap: 10px; }
+  .mp-header .btn { width: 100%; justify-content: center; }
 }
 </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
+<!-- Navbar -->
 <nav class="navbar">
   <div class="navbar-inner">
     <a href="index.html" class="logo"><div class="logo-dot"></div>ODDS<span>ORACLE</span></a>
     <div class="nav-links" id="navLinks">
       <a href="index.html" class="nav-link">Home</a>
       <a href="predictions.html" class="nav-link"><i class="fa fa-robot" style="font-size:11px"></i> AI Predictions</a>
+      <a href="my-predictions.html" class="nav-link active">My Picks</a>
       <a href="tracker.html" class="nav-link">Tracker</a>
-      <a href="forum.html" class="nav-link">Forum</a>
       <a href="sportsbooks.html" class="nav-link">Sportsbooks</a>
       <a href="how-it-works.html" class="nav-link">How It Works</a>
-      <a href="blog.html" class="nav-link">Blog</a>
-      <a href="faq.html" class="nav-link">FAQ</a>
       <a href="payment.html" class="nav-link">Pricing</a>
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:8px;padding:10px 14px 4px" class="hide-desktop">
         <a href="login.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">Login</a>
@@ -129,7 +180,6 @@
       </div>
     </div>
     <div class="nav-actions">
-      <span class="nav-ticker"><i class="fa fa-circle" style="font-size:7px;color:var(--accent-green)"></i> 78.4% Accuracy</span>
       <a href="login.html" class="btn btn-ghost btn-sm">Login</a>
       <a href="register.html" class="btn btn-primary btn-sm">Sign Up</a>
       <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
@@ -142,8 +192,8 @@
   <!-- Header -->
   <div class="mp-header">
     <div>
-      <h1><i class="fa fa-bookmark" style="color:var(--accent-cyan);margin-right:10px"></i>My Saved Predictions</h1>
-      <p>Track every pick you've saved and mark your results</p>
+      <h1><i class="fa fa-bookmark" style="color:var(--accent-cyan);margin-right:10px"></i>My Prediction Tracker</h1>
+      <p>Track every pick, mark results and monitor your P&L in real time</p>
     </div>
     <a href="predictions.html" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Save New Pick</a>
   </div>
@@ -151,37 +201,56 @@
   <!-- Stats -->
   <div class="mp-stats" id="mpStats">
     <div class="mp-stat">
+      <div class="mp-stat-icon">📋</div>
       <div class="mp-stat-val" style="color:var(--accent-cyan)" id="mpTotal">—</div>
       <div class="mp-stat-lbl">Total Picks</div>
     </div>
     <div class="mp-stat">
+      <div class="mp-stat-icon">✅</div>
       <div class="mp-stat-val" style="color:var(--accent-green)" id="mpWins">—</div>
       <div class="mp-stat-lbl">Wins</div>
     </div>
     <div class="mp-stat">
+      <div class="mp-stat-icon">❌</div>
       <div class="mp-stat-val" style="color:#ff4757" id="mpLosses">—</div>
       <div class="mp-stat-lbl">Losses</div>
     </div>
     <div class="mp-stat">
+      <div class="mp-stat-icon">🎯</div>
       <div class="mp-stat-val" style="color:var(--accent-yellow)" id="mpWinRate">—</div>
       <div class="mp-stat-lbl">Win Rate</div>
     </div>
     <div class="mp-stat">
+      <div class="mp-stat-icon">💰</div>
       <div class="mp-stat-val" id="mpPnl">—</div>
       <div class="mp-stat-lbl">P&L (Units)</div>
     </div>
+    <div class="mp-stat">
+      <div class="mp-stat-icon">📈</div>
+      <div class="mp-stat-val" id="mpRoi">—</div>
+      <div class="mp-stat-lbl">ROI %</div>
+    </div>
+  </div>
+
+  <!-- Streak banner (hidden until data loads) -->
+  <div id="streakBanner" style="display:none"></div>
+
+  <!-- P&L Chart -->
+  <div class="chart-card" id="chartCard" style="display:none">
+    <div class="chart-title"><i class="fa fa-chart-line"></i> Running P&L (Units)</div>
+    <div class="chart-wrap"><canvas id="pnlChart"></canvas></div>
   </div>
 
   <!-- Filters -->
   <div class="mp-filters" id="mpFilters">
-    <span style="font-size:12px;color:var(--text-muted);font-weight:600">Filter:</span>
-    <button class="filter-chip active" data-result="all"    onclick="setFilter(this,'result')">All</button>
-    <button class="filter-chip"        data-result="pending" onclick="setFilter(this,'result')">Pending</button>
-    <button class="filter-chip"        data-result="win"     onclick="setFilter(this,'result')">Wins</button>
-    <button class="filter-chip"        data-result="loss"    onclick="setFilter(this,'result')">Losses</button>
-    <span style="width:1px;height:20px;background:var(--border);margin:0 4px"></span>
-    <span style="font-size:12px;color:var(--text-muted);font-weight:600">Sport:</span>
-    <div id="sportChips"></div>
+    <span class="filter-label">Status:</span>
+    <button class="filter-chip active" data-result="all"     onclick="setFilter(this,'result')">All</button>
+    <button class="filter-chip"        data-result="pending" onclick="setFilter(this,'result')">⏳ Pending</button>
+    <button class="filter-chip"        data-result="win"     onclick="setFilter(this,'result')">✅ Wins</button>
+    <button class="filter-chip"        data-result="loss"    onclick="setFilter(this,'result')">❌ Losses</button>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Sport:</span>
+    <div id="sportChips" style="display:contents"></div>
   </div>
 
   <!-- Table -->
@@ -192,12 +261,12 @@
       <div>Pick</div>
       <div>Odds</div>
       <div>Conf.</div>
-      <div>Result</div>
+      <div>Result / P&L</div>
       <div>Mark Result</div>
     </div>
     <div id="predRows">
       <div class="empty-state">
-        <i class="fa fa-spinner fa-spin"></i>
+        <span class="empty-icon"><i class="fa fa-spinner fa-spin"></i></span>
         <p>Loading your predictions…</p>
       </div>
     </div>
@@ -208,7 +277,7 @@
 
 </div>
 
-<!-- FOOTER -->
+<!-- Footer -->
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
@@ -236,110 +305,218 @@
 <script src="js/main.js"></script>
 <script>
 (function () {
-  let currentPage   = 1;
-  let activeResult  = 'all';
-  let activeSport   = 'all';
+  let currentPage  = 1;
+  let activeResult = 'all';
+  let activeSport  = 'all';
+  let allRowsCache = []; /* for chart */
+  let pnlChartInst = null;
 
-  /* Redirect if not logged in */
-  fetch('api/auth-check.php').then(r => r.json()).then(auth => {
-    if (!auth.logged_in) { window.location.href = 'login.html'; return; }
-    loadPredictions();
-  }).catch(() => { window.location.href = 'login.html'; });
+  /* ── Auth gate ── */
+  (function checkAuth() {
+    try {
+      const cached = JSON.parse(sessionStorage.getItem('oo_auth') || 'null');
+      if (cached && cached.logged_in) { loadPredictions(); return; }
+    } catch(e) {}
+    fetch('api/auth-check.php').then(r => r.json()).then(auth => {
+      if (!auth.logged_in) { window.location.href = 'login.html'; return; }
+      loadPredictions();
+    }).catch(() => { window.location.href = 'login.html'; });
+  })();
 
+  /* ── Load ── */
   function loadPredictions(page) {
     page = page || currentPage;
     const url = `api/my-predictions.php?page=${page}&result=${activeResult}&sport=${activeSport}`;
     fetch(url).then(r => r.json()).then(data => {
       if (!data.success) return;
-      currentPage = page;
+      currentPage  = page;
+      allRowsCache = data.rows;
       renderStats(data.stats);
       renderSportChips(data.sports);
       renderRows(data.rows);
       renderPagination(data.page, data.pages);
+      renderChart(data.stats, data.rows);
+      renderStreak(data.rows);
     }).catch(() => {
       document.getElementById('predRows').innerHTML =
-        '<div class="empty-state"><i class="fa fa-exclamation-triangle"></i><p>Could not load predictions.</p></div>';
+        '<div class="empty-state"><span class="empty-icon"><i class="fa fa-exclamation-triangle"></i></span><p>Could not load predictions. Please refresh.</p></div>';
     });
   }
 
+  /* ── Stats ── */
   function renderStats(s) {
-    document.getElementById('mpTotal').textContent   = s.total;
-    document.getElementById('mpWins').textContent    = s.wins;
-    document.getElementById('mpLosses').textContent  = s.losses;
-    document.getElementById('mpWinRate').textContent = s.win_rate + '%';
+    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    set('mpTotal',   s.total   || 0);
+    set('mpWins',    s.wins    || 0);
+    set('mpLosses',  s.losses  || 0);
+    set('mpWinRate', (s.win_rate || 0) + '%');
+
+    /* P&L */
+    const pnl   = parseFloat(s.total_pnl || 0);
     const pnlEl = document.getElementById('mpPnl');
-    pnlEl.textContent = (s.total_pnl >= 0 ? '+' : '') + s.total_pnl;
-    pnlEl.style.color = s.total_pnl > 0 ? 'var(--accent-green)' : s.total_pnl < 0 ? '#ff4757' : 'var(--text-primary)';
+    if (pnlEl) {
+      pnlEl.textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(2);
+      pnlEl.style.color = pnl > 0 ? 'var(--accent-green)' : pnl < 0 ? '#ff4757' : 'var(--text-primary)';
+    }
+
+    /* ROI = total_pnl / total_staked * 100, assume 1 unit per bet */
+    const resolved = (parseInt(s.wins||0) + parseInt(s.losses||0));
+    const roi      = resolved > 0 ? ((pnl / resolved) * 100).toFixed(1) : 0;
+    const roiEl    = document.getElementById('mpRoi');
+    if (roiEl) {
+      roiEl.textContent = (roi > 0 ? '+' : '') + roi + '%';
+      roiEl.style.color = roi > 0 ? 'var(--accent-green)' : roi < 0 ? '#ff4757' : 'var(--text-primary)';
+    }
   }
 
+  /* ── Streak banner ── */
+  function renderStreak(rows) {
+    const banner = document.getElementById('streakBanner');
+    if (!banner || !rows.length) return;
+    let streak = 0; let streakType = '';
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i].result;
+      if (r === 'pending') continue;
+      if (!streakType) { streakType = r; streak = 1; }
+      else if (r === streakType) { streak++; }
+      else break;
+    }
+    if (streak >= 2) {
+      const isWin = streakType === 'win';
+      banner.className = 'streak-banner ' + (isWin ? 'streak-win' : 'streak-loss');
+      banner.innerHTML = `<span style="font-size:20px">${isWin ? '🔥' : '🧊'}</span>
+        <span>${isWin ? 'Win' : 'Loss'} streak: <strong>${streak} in a row</strong> — ${isWin ? 'Keep it up!' : 'A win is coming!'}</span>`;
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  /* ── P&L Chart ── */
+  function renderChart(stats, rows) {
+    const resolved = rows.filter(r => r.result !== 'pending');
+    const card     = document.getElementById('chartCard');
+    if (!card || resolved.length < 2) { if(card) card.style.display='none'; return; }
+    card.style.display = 'block';
+
+    /* Build running P&L array (oldest first) */
+    const sorted = [...resolved].reverse();
+    let running = 0;
+    const labels = sorted.map((r, i) => '#' + (i+1));
+    const values = sorted.map(r => { running += parseFloat(r.pnl || 0); return parseFloat(running.toFixed(2)); });
+
+    const ctx = document.getElementById('pnlChart').getContext('2d');
+    if (pnlChartInst) pnlChartInst.destroy();
+
+    const finalPnl = values[values.length - 1] || 0;
+    const lineColor = finalPnl >= 0 ? '#00ff88' : '#ff4757';
+
+    pnlChartInst = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          borderColor: lineColor,
+          backgroundColor: lineColor + '18',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: resolved.length <= 20 ? 3 : 0,
+          pointBackgroundColor: lineColor,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: ctx => (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y + ' units' }
+        }},
+        scales: {
+          x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+          y: { ticks: { color: '#6b7280', font: { size: 10 }, callback: v => (v>0?'+':'')+v },
+               grid: { color: 'rgba(255,255,255,0.06)' },
+               zero: true }
+        }
+      }
+    });
+  }
+
+  /* ── Sport chips ── */
   function renderSportChips(sports) {
     const el = document.getElementById('sportChips');
     if (!el) return;
-    let html = '<button class="filter-chip' + (activeSport === 'all' ? ' active' : '') + '" data-sport="all" onclick="setSport(this)">All Sports</button>';
+    let html = `<button class="filter-chip${activeSport==='all'?' active':''}" data-sport="all" onclick="setSport(this)">All Sports</button>`;
     sports.forEach(s => {
-      html += `<button class="filter-chip${activeSport === s ? ' active' : ''}" data-sport="${s}" onclick="setSport(this)">${s}</button>`;
+      html += `<button class="filter-chip${activeSport===s?' active':''}" data-sport="${s}" onclick="setSport(this)">${s}</button>`;
     });
     el.innerHTML = html;
   }
 
+  /* ── Rows ── */
   function renderRows(rows) {
     const el = document.getElementById('predRows');
     if (!rows || rows.length === 0) {
       el.innerHTML = `<div class="empty-state">
-        <i class="fa fa-bookmark"></i>
-        <p>No predictions here yet.<br>
-        <a href="predictions.html" style="color:var(--accent-cyan)">Save your first pick →</a></p>
+        <span class="empty-icon"><i class="fa fa-bookmark"></i></span>
+        <p>No predictions here yet.</p>
+        <a href="predictions.html" class="btn btn-primary btn-sm" style="margin-top:14px;display:inline-flex">
+          <i class="fa fa-plus"></i> Save your first pick
+        </a>
       </div>`;
       return;
     }
 
     el.innerHTML = rows.map(row => {
-      const rc    = row.result === 'win' ? 'win' : row.result === 'loss' ? 'loss' : 'pending';
-      const conf  = parseInt(row.confidence);
-      const cCol  = conf >= 80 ? 'var(--accent-green)' : conf >= 68 ? 'var(--accent-yellow)' : 'var(--accent-orange)';
-      const date  = new Date(row.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const rc       = row.result === 'win' ? 'win' : row.result === 'loss' ? 'loss' : 'pending';
+      const conf     = parseInt(row.confidence || 0);
+      const cCol     = conf >= 80 ? 'var(--accent-green)' : conf >= 68 ? 'var(--accent-yellow)' : 'var(--accent-orange)';
+      const date     = new Date(row.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'});
       const isPending = row.result === 'pending';
+      const pnl      = parseFloat(row.pnl || 0);
 
-      return `<div class="pred-row" data-id="${row.id}">
+      return `<div class="pred-row row-${rc}" data-id="${row.id}">
         <div>
           <div class="match-name">${row.match_name}</div>
-          <div class="match-league">${row.league} &middot; ${date}</div>
+          <div class="match-meta">${row.league} &middot; ${date}</div>
         </div>
-        <div class="sport-tag">${row.sport}</div>
+        <div><span class="sport-badge">${row.sport}</span></div>
         <div class="pick-text">${row.prediction}</div>
-        <div class="odds-mono">${parseFloat(row.odds).toFixed(2)}</div>
+        <div class="odds-mono">${parseFloat(row.odds||0).toFixed(2)}</div>
         <div class="conf-cell" style="color:${cCol}">${conf}%</div>
         <div>
           <span class="result-badge ${rc}">
-            ${rc === 'win' ? '<i class="fa fa-check"></i>' : rc === 'loss' ? '<i class="fa fa-times"></i>' : '<i class="fa fa-clock"></i>'}
+            ${rc==='win'?'<i class="fa fa-check"></i>':rc==='loss'?'<i class="fa fa-times"></i>':'<i class="fa fa-clock"></i>'}
             ${row.result}
           </span>
-          ${row.result !== 'pending' && row.pnl != 0 ? `<div style="font-size:11px;color:${row.pnl > 0 ? 'var(--accent-green)' : '#ff4757'};margin-top:3px">${row.pnl > 0 ? '+' : ''}${row.pnl} units</div>` : ''}
+          ${rc !== 'pending' ? `<div class="pnl-text" style="color:${pnl>=0?'var(--accent-green)':'#ff4757'}">${pnl>=0?'+':''}${pnl.toFixed(2)} u</div>` : ''}
         </div>
         <div class="result-btns">
           ${isPending ? `
             <button class="res-btn win-btn"  onclick="markResult(${row.id},'win',this)"><i class="fa fa-check"></i> Win</button>
             <button class="res-btn loss-btn" onclick="markResult(${row.id},'loss',this)"><i class="fa fa-times"></i> Loss</button>
-          ` : `<span style="font-size:11px;color:var(--text-muted)">Settled</span>`}
+          ` : `<span class="settled-text"><i class="fa fa-lock"></i> Settled</span>`}
         </div>
       </div>`;
     }).join('');
   }
 
+  /* ── Pagination ── */
   function renderPagination(page, pages) {
     const el = document.getElementById('pagination');
-    if (pages <= 1) { el.innerHTML = ''; return; }
+    if (!el || pages <= 1) { if(el) el.innerHTML=''; return; }
     let html = `<button class="page-btn" onclick="goPage(${page-1})" ${page<=1?'disabled':''}>← Prev</button>`;
-    for (let i = 1; i <= pages; i++) {
-      html += `<button class="page-btn${i===page?' active':''}" onclick="goPage(${i})">${i}</button>`;
-    }
+    const start = Math.max(1, page-2), end = Math.min(pages, page+2);
+    if (start > 1) html += `<button class="page-btn" onclick="goPage(1)">1</button>${start>2?'<span style="padding:0 4px;color:var(--text-muted)">…</span>':''}`;
+    for (let i = start; i <= end; i++) html += `<button class="page-btn${i===page?' active':''}" onclick="goPage(${i})">${i}</button>`;
+    if (end < pages) html += `${end<pages-1?'<span style="padding:0 4px;color:var(--text-muted)">…</span>':''}<button class="page-btn" onclick="goPage(${pages})">${pages}</button>`;
     html += `<button class="page-btn" onclick="goPage(${page+1})" ${page>=pages?'disabled':''}>Next →</button>`;
     el.innerHTML = html;
   }
 
-  /* Global helpers */
+  /* ── Public helpers ── */
   window.setFilter = function(btn, type) {
-    document.querySelectorAll(`[data-result]`).forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('[data-result]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     activeResult = btn.dataset.result;
     currentPage  = 1;
@@ -359,22 +536,25 @@
   window.markResult = async function(id, result, btn) {
     const row = btn.closest('.pred-row');
     row.querySelectorAll('.res-btn').forEach(b => b.disabled = true);
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
 
     try {
       const res  = await fetch('api/update-result.php', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, result }),
+        body:    JSON.stringify({ id, result }),
       });
       const data = await res.json();
       if (data.success) {
-        loadPredictions(currentPage); /* refresh the row */
+        loadPredictions(currentPage);
       } else {
         row.querySelectorAll('.res-btn').forEach(b => b.disabled = false);
+        btn.innerHTML = result === 'win' ? '<i class="fa fa-check"></i> Win' : '<i class="fa fa-times"></i> Loss';
         alert(data.message || 'Could not update result.');
       }
     } catch (e) {
       row.querySelectorAll('.res-btn').forEach(b => b.disabled = false);
+      btn.innerHTML = result === 'win' ? '<i class="fa fa-check"></i> Win' : '<i class="fa fa-times"></i> Loss';
     }
   };
 
