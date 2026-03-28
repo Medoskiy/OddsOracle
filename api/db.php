@@ -43,11 +43,14 @@ function initDB() {
             email        VARCHAR(120) NOT NULL UNIQUE,
             password     VARCHAR(255) NOT NULL,
             plan         ENUM('free','pro','elite') NOT NULL DEFAULT 'free',
+            api_token    VARCHAR(64)  NULL,
             created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             last_login   DATETIME NULL,
             is_active    TINYINT(1) NOT NULL DEFAULT 1
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    /* Add api_token column to existing tables that may not have it */
+    try { $db->exec("ALTER TABLE users ADD COLUMN api_token VARCHAR(64) NULL"); } catch(Exception $e) {}
 
     /* Prediction tracker table */
     $db->exec("

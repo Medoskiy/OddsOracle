@@ -52,20 +52,23 @@ if (!$user['is_active']) {
     exit;
 }
 
-/* ── Update last login ── */
-$db->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')->execute([$user['id']]);
+/* ── Generate persistent API token ── */
+$apiToken = bin2hex(random_bytes(32)); // 64-char hex token
+$db->prepare('UPDATE users SET last_login = NOW(), api_token = ? WHERE id = ?')
+   ->execute([$apiToken, $user['id']]);
 
-/* ── Start session ── */
+/* ── Start session (best effort — may not work on all mobile browsers) ── */
 session_start();
 $_SESSION['user_id']  = $user['id'];
 $_SESSION['username'] = $user['username'];
 $_SESSION['plan']     = $user['plan'];
 
 echo json_encode([
-    'success'  => true,
-    'message'  => 'Welcome back, @' . $user['username'] . '!',
-    'redirect' => '../dashboard.html',
-    'user'     => [
+    'success'   => true,
+    'message'   => 'Welcome back, @' . $user['username'] . '!',
+    'redirect'  => '../dashboard.html',
+    'api_token' => $apiToken,
+    'user'      => [
         'username' => $user['username'],
         'plan'     => $user['plan'],
     ],

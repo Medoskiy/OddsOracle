@@ -550,10 +550,14 @@
     btn.innerHTML  = '<i class="fa fa-spinner fa-spin"></i> Saving…';
 
     try {
+      const apiToken = localStorage.getItem('oo_api_token') || '';
       const res  = await fetch('api/save-prediction.php', {
         method:      'POST',
-        credentials: 'same-origin',
-        headers:     { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers:     {
+          'Content-Type': 'application/json',
+          'X-API-Token':  apiToken,
+        },
         body:        JSON.stringify(payload),
       });
 

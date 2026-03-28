@@ -227,6 +227,14 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
   .then(r => r.json())
   .then(data => {
     if (data.success) {
+      /* Store API token in localStorage — used for AJAX calls on mobile */
+      if (data.api_token) {
+        localStorage.setItem('oo_api_token', data.api_token);
+      }
+      /* Cache auth state for navbar */
+      try {
+        sessionStorage.setItem('oo_auth', JSON.stringify({ logged_in: true, username: data.user?.username, plan: data.user?.plan }));
+      } catch(e) {}
       showToast(data.message, 'success');
       setTimeout(() => window.location.href = data.redirect || 'predictions.html', 1200);
     } else {

@@ -5,13 +5,6 @@
    ============================================================ */
 
 header('Content-Type: application/json');
-session_start();
-
-if (empty($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Please log in to save predictions.']);
-    exit;
-}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -24,7 +17,31 @@ require_once __DIR__ . '/db.php';
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) $input = $_POST;
 
-$uid        = (int) $_SESSION['user_id'];
+/* ── Auth: try API token first (reliable on mobile), fallback to session ── */
+$uid = 0;
+
+$apiToken = $_SERVER['HTTP_X_API_TOKEN'] ?? '';
+if ($apiToken) {
+    $db   = getDB();
+    $stmt = $db->prepare("SELECT id FROM users WHERE api_token = ? AND is_active = 1 LIMIT 1");
+    $stmt->execute([$apiToken]);
+    $row = $stmt->fetch();
+    if ($row) $uid = (int) $row['id'];
+}
+
+/* Fallback to PHP session */
+if (!$uid) {
+    session_start();
+    if (!empty($_SESSION['user_id'])) {
+        $uid = (int) $_SESSION['user_id'];
+    }
+}
+
+if (!$uid) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Please log in to save predictions.']);
+    exit;
+}
 $matchName  = trim($input['match_name']  ?? '');
 $sport      = trim($input['sport']       ?? '');
 $league     = trim($input['league']      ?? '');
