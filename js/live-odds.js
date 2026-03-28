@@ -297,7 +297,7 @@
         </div>` : ''}
         ${renderBookmakers(ev.rawBookmakers, ev.recommended)}
 
-        <!-- Claude AI Analysis Button -->
+        <!-- Claude + Save buttons -->
         <button class="claude-analyse-btn"
           data-match="${encodeURIComponent(ev.match)}"
           data-home="${encodeURIComponent(ev.home)}"
@@ -312,17 +312,15 @@
           data-pick="${encodeURIComponent(ev.recommended.name)}"
           data-books="${ev.bookCount}"
           data-outcomes="${encodeURIComponent(JSON.stringify(ev.outcomes))}"
+          data-event-id="${ev.id}"
           onclick="OddsEngine.analyseWithClaude(this)"
-          style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:10px;
+          style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
                  cursor:pointer;transition:all 0.2s;
                  display:flex;align-items:center;justify-content:center;gap:8px">
           🤖 Get Claude AI Analysis
         </button>
-
-        <!-- AI result box (hidden until analysed) -->
-        <div class="claude-result" id="cr-${ev.id}" style="display:none;margin-top:10px"></div>
 
         <!-- Save Pick Button -->
         <button class="save-pick-btn"
@@ -333,13 +331,19 @@
           data-odds="${odds}"
           data-conf="${conf}"
           onclick="OddsEngine.savePick(this)"
-          style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:10px;
+          style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:11px;
                  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
                  border-radius:8px;color:var(--accent-cyan);font-size:13px;font-weight:700;
                  cursor:pointer;transition:all 0.2s;
                  display:flex;align-items:center;justify-content:center;gap:8px">
           <i class="fa fa-bookmark"></i> Save This Pick
         </button>
+      </div>
+
+      <!-- Claude AI dropdown panel — full width below the card content -->
+      <div class="claude-dropdown" id="cr-${ev.id}"
+           style="display:none;overflow:hidden;transition:max-height 0.4s ease,opacity 0.3s ease;
+                  max-height:0;opacity:0;margin-top:0">
       </div>
     </div>`;
   }
@@ -516,24 +520,42 @@
 
   async function analyseWithClaude(btn) {
     const eventCard = btn.closest('.event-card');
-    const resultBox = eventCard ? eventCard.querySelector('.claude-result') : null;
+    const eventId   = btn.dataset.eventId;
+    const resultBox = eventCard ? eventCard.querySelector('.claude-dropdown') : null;
+
+    /* If already loaded — toggle open/close */
+    if (btn.dataset.loaded === '1') {
+      const isOpen = resultBox && resultBox.style.display !== 'none';
+      if (isOpen) {
+        collapseDropdown(resultBox);
+        btn.innerHTML = '🤖 Show Claude AI Analysis ▼';
+      } else {
+        expandDropdown(resultBox);
+        btn.innerHTML = '🤖 Hide Claude AI Analysis ▲';
+        setTimeout(() => resultBox && resultBox.scrollIntoView({ behavior:'smooth', block:'nearest' }), 350);
+      }
+      return;
+    }
 
     /* Disable button and show loading */
     btn.disabled  = true;
-    btn.innerHTML = '🤖 <span style="animation:spin 0.8s linear infinite;display:inline-block">⟳</span> Analysing with Claude…';
+    btn.innerHTML = '🤖 Analysing with Claude AI…';
 
-    /* Show loading skeleton in result box */
+    /* Show loading skeleton */
     if (resultBox) {
       resultBox.style.display = 'block';
       resultBox.innerHTML = `
-        <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
-                    border-radius:10px;padding:16px;animation:pulse 1.5s ease infinite">
-          <div style="height:12px;background:rgba(167,139,250,0.15);border-radius:4px;width:60%;margin-bottom:10px"></div>
-          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:6px"></div>
-          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:80%;margin-bottom:6px"></div>
-          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:90%"></div>
+        <div style="margin-top:12px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+                    border-left:3px solid #a78bfa;border-radius:10px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <span style="color:#a78bfa;font-size:13px;font-weight:700">🤖 Claude is analysing this match…</span>
+          </div>
+          <div style="height:10px;background:rgba(167,139,250,0.15);border-radius:4px;width:80%;margin-bottom:8px;animation:pulse 1.2s ease infinite"></div>
+          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:8px;animation:pulse 1.2s ease infinite 0.1s"></div>
+          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:70%;animation:pulse 1.2s ease infinite 0.2s"></div>
         </div>
         <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+      expandDropdown(resultBox);
     }
 
     /* Build payload */
@@ -563,27 +585,51 @@
 
       if (data.success) {
         renderClaudeResult(resultBox, data);
-        btn.innerHTML = '🤖 Claude AI Analysis ✓';
-        btn.style.background   = 'rgba(124,58,237,0.15)';
-        btn.style.borderColor  = 'rgba(167,139,250,0.4)';
-        /* Scroll result into view on mobile */
+        expandDropdown(resultBox);
+        btn.disabled       = false;
+        btn.dataset.loaded = '1';
+        btn.innerHTML      = '🤖 Hide Claude AI Analysis ▲';
+        btn.style.background  = 'rgba(124,58,237,0.15)';
+        btn.style.borderColor = 'rgba(167,139,250,0.5)';
+        btn.style.color       = '#c4b5fd';
+        /* Scroll into view on mobile */
         setTimeout(() => {
-          if (resultBox) {
-            resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }
-        }, 100);
+          if (resultBox) resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 350);
       } else {
-        if (resultBox) resultBox.style.display = 'none';
+        collapseDropdown(resultBox);
         btn.disabled  = false;
         btn.innerHTML = '🤖 Get Claude AI Analysis';
         showSaveToast('Claude error: ' + (data.message || 'Unknown error'), 'error');
       }
     } catch (e) {
-      if (resultBox) resultBox.style.display = 'none';
+      collapseDropdown(resultBox);
       btn.disabled  = false;
       btn.innerHTML = '🤖 Get Claude AI Analysis';
       showSaveToast('Network error. Please try again.', 'error');
     }
+  }
+
+  function expandDropdown(el) {
+    if (!el) return;
+    el.style.display   = 'block';
+    el.style.maxHeight = '0';
+    el.style.opacity   = '0';
+    requestAnimationFrame(() => {
+      el.style.transition = 'max-height 0.45s ease, opacity 0.3s ease, margin-top 0.3s ease';
+      el.style.maxHeight  = '2000px';
+      el.style.opacity    = '1';
+      el.style.marginTop  = '12px';
+    });
+  }
+
+  function collapseDropdown(el) {
+    if (!el) return;
+    el.style.transition = 'max-height 0.35s ease, opacity 0.25s ease, margin-top 0.25s ease';
+    el.style.maxHeight  = '0';
+    el.style.opacity    = '0';
+    el.style.marginTop  = '0';
+    setTimeout(() => { if (el) el.style.display = 'none'; }, 360);
   }
 
   function renderClaudeResult(box, data) {
@@ -620,7 +666,8 @@
     }
 
     box.innerHTML = `
-      <div style="background:${bg};border:1px solid ${col}33;border-radius:10px;padding:16px">
+      <div style="background:${bg};border:1px solid ${col}44;border-left:3px solid ${col};
+                  border-radius:0 0 12px 12px;padding:16px;border-top:none">
         <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:8px">
