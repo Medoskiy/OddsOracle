@@ -702,9 +702,9 @@ function renderEvents(filter = 'all', valueOnly = false) {
           🤖 Get Claude AI Analysis
         </a>
 
-        <!-- Save Pick button -->
-        <button class="save-pick-btn"
-          href="api/save-pick.php?match=${encodeURIComponent(p.home+' vs '+p.away)}&sport=${encodeURIComponent(p.sport)}&league=${encodeURIComponent(p.league)}&pick=${encodeURIComponent(p.predicted)}&odds=${p.bestOdds[p.predIdx]}&conf=${p.conf}&token="
+        <!-- Save Pick — plain <a> link so it always works on mobile -->
+        <a class="save-pick-btn"
+          href="api/save-pick.php?match=${encodeURIComponent(p.home+' vs '+p.away)}&sport=${encodeURIComponent(p.sport)}&league=${encodeURIComponent(p.league)}&pick=${encodeURIComponent(p.predicted)}&odds=${p.bestOdds[p.predIdx]}&conf=${p.conf}&token=TOKEN_PLACEHOLDER"
           style="margin-top:8px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
                  border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
                  font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;
@@ -716,10 +716,13 @@ function renderEvents(filter = 'all', valueOnly = false) {
     div.addEventListener('click', () => selectEvent(p.id));
 
     /* Inject API token into save link href */
-    const saveLink = div.querySelector('.save-pick-btn');
+    const saveLink = div.querySelector('a.save-pick-btn');
     if (saveLink) {
-      const tok = localStorage.getItem('oo_api_token') || '';
-      saveLink.href = saveLink.href.replace('token=', 'token=' + encodeURIComponent(tok));
+      try {
+        const tok  = localStorage.getItem('oo_api_token') || '';
+        const href = saveLink.getAttribute('href');
+        saveLink.setAttribute('href', href.replace('TOKEN_PLACEHOLDER', encodeURIComponent(tok)));
+      } catch(e) {}
     }
 
     list.appendChild(div);

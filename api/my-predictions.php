@@ -7,15 +7,32 @@
 header('Content-Type: application/json');
 session_start();
 
-if (empty($_SESSION['user_id'])) {
+require_once __DIR__ . '/db.php';
+
+$uid = 0;
+
+/* ── Session check ── */
+if (!empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+}
+
+/* ── API token fallback ── */
+if (!$uid) {
+    $token = $_SERVER['HTTP_X_API_TOKEN'] ?? '';
+    if (!empty($token)) {
+        $db   = getDB();
+        $stmt = $db->prepare("SELECT id FROM users WHERE api_token = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch();
+        if ($row) $uid = (int) $row['id'];
+    }
+}
+
+if (!$uid) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Not authenticated']);
     exit;
 }
-
-require_once __DIR__ . '/db.php';
-
-$uid    = (int) $_SESSION['user_id'];
 $page   = max(1, (int) ($_GET['page']   ?? 1));
 $limit  = 20;
 $offset = ($page - 1) * $limit;

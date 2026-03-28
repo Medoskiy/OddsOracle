@@ -98,8 +98,9 @@ if (window.location.search.includes('logout=1')) {
     if (cached) applyAuthNav(JSON.parse(cached));
   } catch (e) {}
 
-  /* Then verify with server and refresh cache */
-  fetch('api/auth-check.php')
+  /* Then verify with server and refresh cache — send API token so it works when PHP session expires */
+  const _tok = (function(){ try { return localStorage.getItem('oo_api_token') || ''; } catch(e){ return ''; } })();
+  fetch('api/auth-check.php', { headers: { 'X-API-Token': _tok } })
     .then(r => r.json())
     .then(auth => {
       if (auth.logged_in) {

@@ -487,9 +487,6 @@
     }, 1000);
   }
 
-  /* Fix variable name typo used in tab click handler */
-  let activeSport = 'all';
-
   /* Script loads at bottom of body — wait a tick for all inline scripts to finish */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(init, 300));

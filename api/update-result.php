@@ -7,12 +7,6 @@
 header('Content-Type: application/json');
 session_start();
 
-if (empty($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Not authenticated']);
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
@@ -21,10 +15,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/db.php';
 
-$input  = json_decode(file_get_contents('php://input'), true);
+$input = json_decode(file_get_contents('php://input'), true);
 if (!$input) $input = $_POST;
 
-$uid    = (int) $_SESSION['user_id'];
+$uid = 0;
+
+/* ── Session check ── */
+if (!empty($_SESSION['user_id'])) {
+    $uid = (int) $_SESSION['user_id'];
+}
+
+/* ── API token fallback ── */
+if (!$uid) {
+    $token = $_SERVER['HTTP_X_API_TOKEN'] ?? '';
+    if (!empty($token)) {
+        $db   = getDB();
+        $stmt = $db->prepare("SELECT id FROM users WHERE api_token = ? AND is_active = 1 LIMIT 1");
+        $stmt->execute([$token]);
+        $row = $stmt->fetch();
+        if ($row) $uid = (int) $row['id'];
+    }
+}
+
+if (!$uid) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+    exit;
+}
 $predId = (int) ($input['id']     ?? 0);
 $result = trim($input['result']   ?? '');
 $stake  = (float) ($input['stake'] ?? 1); // default 1 unit

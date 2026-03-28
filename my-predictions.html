@@ -311,23 +311,27 @@
   let allRowsCache = []; /* for chart */
   let pnlChartInst = null;
 
+  /* Grab stored API token once — sent in every authenticated request */
+  function apiToken() { try { return localStorage.getItem('oo_api_token') || ''; } catch(e) { return ''; } }
+
   /* ── Auth gate ── */
   (function checkAuth() {
     try {
       const cached = JSON.parse(sessionStorage.getItem('oo_auth') || 'null');
       if (cached && cached.logged_in) { loadPredictions(); return; }
     } catch(e) {}
-    fetch('api/auth-check.php').then(r => r.json()).then(auth => {
-      if (!auth.logged_in) { window.location.href = 'login.html'; return; }
-      loadPredictions();
-    }).catch(() => { window.location.href = 'login.html'; });
+    fetch('api/auth-check.php', { headers: { 'X-API-Token': apiToken() } })
+      .then(r => r.json()).then(auth => {
+        if (!auth.logged_in) { window.location.href = 'login.html'; return; }
+        loadPredictions();
+      }).catch(() => { window.location.href = 'login.html'; });
   })();
 
   /* ── Load ── */
   function loadPredictions(page) {
     page = page || currentPage;
     const url = `api/my-predictions.php?page=${page}&result=${activeResult}&sport=${activeSport}`;
-    fetch(url).then(r => r.json()).then(data => {
+    fetch(url, { headers: { 'X-API-Token': apiToken() } }).then(r => r.json()).then(data => {
       if (!data.success) return;
       currentPage  = page;
       allRowsCache = data.rows;
@@ -541,7 +545,7 @@
     try {
       const res  = await fetch('api/update-result.php', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-API-Token': apiToken() },
         body:    JSON.stringify({ id, result }),
       });
       const data = await res.json();
