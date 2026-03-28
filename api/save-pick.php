@@ -15,10 +15,16 @@ $uid = 0;
 $apiToken = $_GET['token'] ?? '';
 if ($apiToken) {
     $db   = getDB();
-    $stmt = $db->prepare("SELECT id FROM users WHERE api_token = ? AND is_active = 1 LIMIT 1");
+    $stmt = $db->prepare("SELECT id, username, plan FROM users WHERE api_token = ? AND is_active = 1 LIMIT 1");
     $stmt->execute([$apiToken]);
     $row = $stmt->fetch();
-    if ($row) $uid = (int) $row['id'];
+    if ($row) {
+        $uid = (int) $row['id'];
+        /* Restore PHP session so subsequent page requests stay authenticated */
+        $_SESSION['user_id']  = $uid;
+        $_SESSION['username'] = $row['username'];
+        $_SESSION['plan']     = $row['plan'];
+    }
 }
 
 /* Fallback to session */

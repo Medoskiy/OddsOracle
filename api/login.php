@@ -52,10 +52,16 @@ if (!$user['is_active']) {
     exit;
 }
 
-/* ── Generate persistent API token ── */
-$apiToken = bin2hex(random_bytes(32)); // 64-char hex token
-$db->prepare('UPDATE users SET last_login = NOW(), api_token = ? WHERE id = ?')
-   ->execute([$apiToken, $user['id']]);
+/* ── Persistent API token — reuse existing so all devices stay valid ── */
+$apiToken = $user['api_token'];
+if (!$apiToken) {
+    $apiToken = bin2hex(random_bytes(32)); // generate only if none exists
+    $db->prepare('UPDATE users SET last_login = NOW(), api_token = ? WHERE id = ?')
+       ->execute([$apiToken, $user['id']]);
+} else {
+    $db->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')
+       ->execute([$user['id']]);
+}
 
 /* ── Start session (best effort — may not work on all mobile browsers) ── */
 session_start();

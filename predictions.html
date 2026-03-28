@@ -959,18 +959,32 @@ function renderCrawlerStatus() {
 
 // ── Sport tabs, value filter & refresh are handled by live-odds.js ──
 // Fallback: if live-odds.js not loaded yet, show simulated events
+var _rescanBusy = false;
 document.getElementById('refreshBtn').addEventListener('click', function() {
-  /* Flash the button so the user knows the tap registered */
-  this.style.opacity = '0.5';
+  if (_rescanBusy) return; /* debounce — ignore tap if already loading */
+  _rescanBusy = true;
+
   var btn = this;
-  setTimeout(function() { btn.style.opacity = ''; }, 400);
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Scanning...';
+
+  var evList = document.getElementById('eventsList');
+  if (evList) evList.innerHTML = '<div style="text-align:center;padding:60px 20px"><i class="fa fa-spinner fa-spin" style="font-size:28px;color:var(--accent-cyan);margin-bottom:12px;display:block"></i><p style="color:var(--text-secondary)">Scanning sportsbooks…</p></div>';
+
+  function done() {
+    _rescanBusy = false;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-sync"></i> Rescan';
+  }
 
   if (window.OddsEngine) {
     window.OddsEngine.refresh();
+    setTimeout(done, 4000); /* re-enable after data should have loaded */
   } else {
-    var evList = document.getElementById('eventsList');
-    if (evList) evList.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><i class="fa fa-spinner fa-spin" style="font-size:24px;margin-bottom:12px"></i><p>Rescanning sportsbooks...</p></div>';
-    setTimeout(() => renderEvents(activeSport, document.getElementById('valueOnly').checked), 800);
+    setTimeout(function() {
+      renderEvents(activeSport, document.getElementById('valueOnly').checked);
+      done();
+    }, 800);
   }
 });
 

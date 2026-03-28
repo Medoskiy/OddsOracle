@@ -338,13 +338,15 @@
 
     container.innerHTML = events.map(renderEvent).join('');
 
-    /* Inject real API token into Save Pick links (avoids localStorage call inside template literals) */
+    /* Inject real API token into Save Pick links using getAttribute so the
+       relative URL is used (not the browser-resolved absolute URL) */
     try {
       const tok = (localStorage.getItem('oo_api_token') || '');
       container.querySelectorAll('a.save-pick-btn').forEach(function(a) {
-        a.href = a.href.replace('TOKEN_PLACEHOLDER', encodeURIComponent(tok));
+        const rel = a.getAttribute('href') || '';
+        a.setAttribute('href', rel.replace('TOKEN_PLACEHOLDER', encodeURIComponent(tok)));
       });
-    } catch(e) { /* localStorage not available — token stays empty, save-pick.php will check session */ }
+    } catch(e) { /* localStorage not available — save-pick.php will check session */ }
 
     /* Update stats bar */
     const totalEl = document.getElementById('statEvents');
