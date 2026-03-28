@@ -244,6 +244,8 @@
   box-sizing: border-box !important;
   white-space: normal !important;
   word-break: break-word;
+  text-decoration: none !important;
+  -webkit-tap-highlight-color: rgba(124,58,237,0.25);
 }
 
 /* Claude AI dropdown — always visible, never clipped */
@@ -689,30 +691,16 @@ function renderEvents(filter = 'all', valueOnly = false) {
           </div>
         </div>
         <div class="conf-bar mt-8"><div class="conf-fill ${p.conf>=80?'conf-high':p.conf>=72?'conf-mid':'conf-low'}" style="width:${p.conf}%"></div></div>
-        <!-- Claude AI Analysis button -->
-        <button class="claude-analyse-btn"
-          data-match="${encodeURIComponent(p.home+' vs '+p.away)}"
-          data-home="${encodeURIComponent(p.home)}"
-          data-away="${encodeURIComponent(p.away)}"
-          data-sport="${encodeURIComponent(p.sport)}"
-          data-league="${encodeURIComponent(p.league)}"
-          data-confidence="${p.conf}"
-          data-grade="${p.grade}"
-          data-edge="${p.edge}"
-          data-fair="${p.modelProb}"
-          data-odds="${p.bestOdds[p.predIdx]}"
-          data-pick="${encodeURIComponent(p.predicted)}"
-          data-books="19"
-          data-outcomes="${encodeURIComponent(JSON.stringify(p.outcomes.map((o,i)=>({name:o,bestOdds:p.bestOdds[i],fairProb:Math.round(p.adjProbs[i]*100),edge:+(p.edge*(i===p.predIdx?1:-0.4)).toFixed(1),isValue:i===p.predIdx&&p.isValue}))))}"
-          onclick="event.stopPropagation(); OddsEngine && OddsEngine.openAnalysis ? OddsEngine.openAnalysis(this) : alert('Please wait for live data to load.')"
+        <!-- Claude AI Analysis link — plain <a> so it always works on mobile -->
+        <a class="claude-analyse-btn"
+          href="analysis.html?match=${encodeURIComponent(p.home+' vs '+p.away)}&home=${encodeURIComponent(p.home)}&away=${encodeURIComponent(p.away)}&sport=${encodeURIComponent(p.sport)}&league=${encodeURIComponent(p.league)}&confidence=${p.conf}&grade=${encodeURIComponent(p.grade)}&edge=${p.edge}&fair=${p.modelProb}&odds=${p.bestOdds[p.predIdx]}&pick=${encodeURIComponent(p.predicted)}&books=19&outcomes=${encodeURIComponent(JSON.stringify(p.outcomes.map((o,i)=>({name:o,bestOdds:p.bestOdds[i],fairProb:Math.round(p.adjProbs[i]*100),edge:+(p.edge*(i===p.predIdx?1:-0.4)).toFixed(1),isValue:i===p.predIdx&&p.isValue}))))}"
           style="margin-top:10px;width:100%;padding:10px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
-                 cursor:pointer;transition:all 0.2s;
+                 cursor:pointer;transition:all 0.2s;text-decoration:none;
                  display:flex;align-items:center;justify-content:center;gap:8px">
           🤖 Get Claude AI Analysis
-        </button>
-        <div class="claude-result" id="cr-sim-${p.id}" style="display:none;margin-top:10px"></div>
+        </a>
 
         <!-- Save Pick button -->
         <button class="save-pick-btn"

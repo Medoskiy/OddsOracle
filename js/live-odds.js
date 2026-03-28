@@ -297,29 +297,16 @@
         </div>` : ''}
         ${renderBookmakers(ev.rawBookmakers, ev.recommended)}
 
-        <!-- Claude + Save buttons -->
-        <button class="claude-analyse-btn"
-          onclick="event.stopPropagation();OddsEngine.openAnalysis(this)"
-          data-match="${encodeURIComponent(ev.match)}"
-          data-home="${encodeURIComponent(ev.home)}"
-          data-away="${encodeURIComponent(ev.away)}"
-          data-sport="${encodeURIComponent(ev.sport)}"
-          data-league="${encodeURIComponent(ev.league)}"
-          data-confidence="${ev.confidence}"
-          data-grade="${ev.grade}"
-          data-edge="${ev.recommended.edge}"
-          data-fair="${ev.recommended.fairProb}"
-          data-odds="${ev.recommended.bestOdds}"
-          data-pick="${encodeURIComponent(ev.recommended.name)}"
-          data-books="${ev.bookCount}"
-          data-outcomes="${encodeURIComponent(JSON.stringify(ev.outcomes))}"
+        <!-- Claude Analysis link — plain <a> so it always works on mobile -->
+        <a class="claude-analyse-btn"
+          href="analysis.html?match=${encodeURIComponent(ev.match)}&home=${encodeURIComponent(ev.home)}&away=${encodeURIComponent(ev.away)}&sport=${encodeURIComponent(ev.sport)}&league=${encodeURIComponent(ev.league)}&confidence=${ev.confidence}&grade=${encodeURIComponent(ev.grade)}&edge=${ev.recommended.edge}&fair=${ev.recommended.fairProb}&odds=${ev.recommended.bestOdds}&pick=${encodeURIComponent(ev.recommended.name)}&books=${ev.bookCount}&outcomes=${encodeURIComponent(JSON.stringify(ev.outcomes))}"
           style="margin-top:10px;width:100%;max-width:100%;box-sizing:border-box;padding:13px;
                  background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
                  border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
-                 cursor:pointer;transition:all 0.2s;
+                 cursor:pointer;transition:all 0.2s;text-decoration:none;
                  display:flex;align-items:center;justify-content:center;gap:8px">
           🤖 Get Claude AI Analysis
-        </button>
+        </a>
 
         <!-- Save Pick Button -->
         <button class="save-pick-btn"
