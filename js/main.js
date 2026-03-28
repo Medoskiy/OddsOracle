@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ---- Clear auth cache on logout ----
 if (window.location.search.includes('logout=1')) {
   sessionStorage.removeItem('oo_auth');
+  try { localStorage.removeItem('oo_api_token'); } catch(e) {}
   history.replaceState(null, '', window.location.pathname);
 }
 
@@ -73,7 +74,8 @@ if (window.location.search.includes('logout=1')) {
         loginBtn.className = 'btn btn-ghost btn-sm';
       }
       if (signupBtn) {
-        signupBtn.href      = 'api/logout.php';
+        var _ltok = (function(){ try { return localStorage.getItem('oo_api_token') || ''; } catch(e){ return ''; } })();
+        signupBtn.href      = 'api/logout.php' + (_ltok ? '?token=' + encodeURIComponent(_ltok) : '');
         signupBtn.innerHTML = 'Logout';
         signupBtn.className = 'btn btn-ghost btn-sm';
       }
@@ -87,7 +89,8 @@ if (window.location.search.includes('logout=1')) {
       mobileLogin.textContent = 'Dashboard';
     }
     if (mobileSignup) {
-      mobileSignup.href        = 'api/logout.php';
+      var _ltok2 = (function(){ try { return localStorage.getItem('oo_api_token') || ''; } catch(e){ return ''; } })();
+      mobileSignup.href        = 'api/logout.php' + (_ltok2 ? '?token=' + encodeURIComponent(_ltok2) : '');
       mobileSignup.textContent = 'Logout';
     }
   }
