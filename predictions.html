@@ -219,6 +219,44 @@
   .crash-display { font-size: 20px !important; }
   .tab-btn { padding: 6px 8px; font-size: 10px; }
 }
+
+/* ══ GLOBAL OVERFLOW LOCK — stops page being wider than screen ══ */
+.container,
+.main-layout,
+.main-layout > *,
+.card,
+.event-card,
+.crash-section,
+.stats-bar,
+#crawlerStatus,
+.crawler-log,
+.filter-bar {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Claude + Save buttons — always full width and never overflow */
+.claude-analyse-btn,
+.save-pick-btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+  word-break: break-word;
+}
+
+/* On mobile ensure pred-box children don't stretch card */
+@media (max-width: 768px) {
+  .pred-box { overflow: hidden; }
+  .pred-meta-row { font-size: 12px; }
+  .claude-analyse-btn { font-size: 12px !important; padding: 9px 8px !important; }
+  .save-pick-btn      { font-size: 12px !important; padding: 9px 8px !important; }
+  /* Claude result box */
+  .claude-result > div { font-size: 12px !important; }
+  .claude-result [style*="font-size:13px"] { font-size: 12px !important; }
+  /* Prevent crawlerStatus from overflowing */
+  #crawlerStatus { grid-template-columns: repeat(3, 1fr) !important; }
+}
 </style>
 </head>
 <body>
@@ -250,7 +288,7 @@
   </div>
 </nav>
 
-<div class="container">
+<div class="container" style="overflow-x:hidden;max-width:100vw;box-sizing:border-box">
   <div class="main-layout">
 
     <!-- LEFT: Main Content -->
@@ -283,7 +321,7 @@
         <div class="crawler-log" id="crawlerLog">
           <div class="log-line"><span class="log-ts">[00:00:00]</span> <span class="log-scan">Initializing OddsOracle crawler v4.2 — 19 sportsbooks queued...</span></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:14px;min-width:0;overflow:hidden" id="crawlerStatus">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-top:14px;min-width:0;overflow:hidden;max-width:100%" id="crawlerStatus">
           <!-- filled by JS -->
         </div>
       </div>
