@@ -310,7 +310,7 @@
 
         <!-- Save Pick — plain <a> link so it always works on mobile -->
         <a class="save-pick-btn"
-          href="api/save-pick.php?match=${safeMatch}&sport=${safeSport}&league=${safeLeague}&pick=${safePick}&odds=${odds}&conf=${conf}&token=${encodeURIComponent(localStorage.getItem('oo_api_token')||'')}"
+          href="api/save-pick.php?match=${safeMatch}&sport=${safeSport}&league=${safeLeague}&pick=${safePick}&odds=${odds}&conf=${conf}&token=TOKEN_PLACEHOLDER"
           style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:13px;
                  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
                  border-radius:8px;color:var(--accent-cyan);font-size:13px;font-weight:700;
@@ -337,6 +337,14 @@
     }
 
     container.innerHTML = events.map(renderEvent).join('');
+
+    /* Inject real API token into Save Pick links (avoids localStorage call inside template literals) */
+    try {
+      const tok = (localStorage.getItem('oo_api_token') || '');
+      container.querySelectorAll('a.save-pick-btn').forEach(function(a) {
+        a.href = a.href.replace('TOKEN_PLACEHOLDER', encodeURIComponent(tok));
+      });
+    } catch(e) { /* localStorage not available — token stays empty, save-pick.php will check session */ }
 
     /* Update stats bar */
     const totalEl = document.getElementById('statEvents');
