@@ -297,6 +297,33 @@
         </div>` : ''}
         ${renderBookmakers(ev.rawBookmakers, ev.recommended)}
 
+        <!-- Claude AI Analysis Button -->
+        <button class="claude-analyse-btn"
+          data-match="${encodeURIComponent(ev.match)}"
+          data-home="${encodeURIComponent(ev.home)}"
+          data-away="${encodeURIComponent(ev.away)}"
+          data-sport="${encodeURIComponent(ev.sport)}"
+          data-league="${encodeURIComponent(ev.league)}"
+          data-confidence="${ev.confidence}"
+          data-grade="${ev.grade}"
+          data-edge="${ev.recommended.edge}"
+          data-fair="${ev.recommended.fairProb}"
+          data-odds="${ev.recommended.bestOdds}"
+          data-pick="${encodeURIComponent(ev.recommended.name)}"
+          data-books="${ev.bookCount}"
+          data-outcomes="${encodeURIComponent(JSON.stringify(ev.outcomes))}"
+          onclick="OddsEngine.analyseWithClaude(this)"
+          style="margin-top:10px;width:100%;padding:10px;
+                 background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);
+                 border-radius:8px;color:#a78bfa;font-size:13px;font-weight:700;
+                 cursor:pointer;transition:all 0.2s;
+                 display:flex;align-items:center;justify-content:center;gap:8px">
+          🤖 Get Claude AI Analysis
+        </button>
+
+        <!-- AI result box (hidden until analysed) -->
+        <div class="claude-result" id="cr-${ev.id}" style="display:none;margin-top:10px"></div>
+
         <!-- Save Pick Button -->
         <button class="save-pick-btn"
           data-match="${safeMatch}"
@@ -483,6 +510,146 @@
   }
 
   /* ══════════════════════════════════════════════════
+     CLAUDE AI ANALYSIS
+     ══════════════════════════════════════════════════ */
+
+  async function analyseWithClaude(btn) {
+    const eventCard = btn.closest('.event-card');
+    const resultBox = eventCard ? eventCard.querySelector('.claude-result') : null;
+
+    /* Disable button and show loading */
+    btn.disabled  = true;
+    btn.innerHTML = '🤖 <span style="animation:spin 0.8s linear infinite;display:inline-block">⟳</span> Analysing with Claude…';
+
+    /* Show loading skeleton in result box */
+    if (resultBox) {
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `
+        <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+                    border-radius:10px;padding:16px;animation:pulse 1.5s ease infinite">
+          <div style="height:12px;background:rgba(167,139,250,0.15);border-radius:4px;width:60%;margin-bottom:10px"></div>
+          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:95%;margin-bottom:6px"></div>
+          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:80%;margin-bottom:6px"></div>
+          <div style="height:10px;background:rgba(167,139,250,0.1);border-radius:4px;width:90%"></div>
+        </div>
+        <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    }
+
+    /* Build payload */
+    const payload = {
+      match:      decodeURIComponent(btn.dataset.match),
+      home:       decodeURIComponent(btn.dataset.home),
+      away:       decodeURIComponent(btn.dataset.away),
+      sport:      decodeURIComponent(btn.dataset.sport),
+      league:     decodeURIComponent(btn.dataset.league),
+      confidence: parseInt(btn.dataset.confidence, 10),
+      grade:      btn.dataset.grade,
+      edge:       parseFloat(btn.dataset.edge),
+      fair_prob:  parseFloat(btn.dataset.fair),
+      best_odds:  parseFloat(btn.dataset.odds),
+      pick:       decodeURIComponent(btn.dataset.pick),
+      book_count: parseInt(btn.dataset.books, 10),
+      outcomes:   JSON.parse(decodeURIComponent(btn.dataset.outcomes)),
+    };
+
+    try {
+      const res  = await fetch('api/claude.php', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        renderClaudeResult(resultBox, data);
+        btn.innerHTML = '🤖 Claude AI Analysis ✓';
+        btn.style.background   = 'rgba(124,58,237,0.15)';
+        btn.style.borderColor  = 'rgba(167,139,250,0.4)';
+      } else {
+        if (resultBox) resultBox.style.display = 'none';
+        btn.disabled  = false;
+        btn.innerHTML = '🤖 Get Claude AI Analysis';
+        showSaveToast('Claude error: ' + (data.message || 'Unknown error'), 'error');
+      }
+    } catch (e) {
+      if (resultBox) resultBox.style.display = 'none';
+      btn.disabled  = false;
+      btn.innerHTML = '🤖 Get Claude AI Analysis';
+      showSaveToast('Network error. Please try again.', 'error');
+    }
+  }
+
+  function renderClaudeResult(box, data) {
+    if (!box) return;
+
+    const verdictColors = { BET: 'var(--accent-green)', MONITOR: 'var(--accent-yellow)', PASS: '#ff4757' };
+    const verdictBg     = { BET: 'rgba(0,255,136,0.08)', MONITOR: 'rgba(255,200,0,0.08)', PASS: 'rgba(255,71,87,0.08)' };
+    const verdictIcons  = { BET: '✅', MONITOR: '👁', PASS: '❌' };
+    const riskColors    = { Low: 'var(--accent-green)', Medium: 'var(--accent-yellow)', High: '#ff4757' };
+
+    const col  = verdictColors[data.verdict]  || 'var(--accent-cyan)';
+    const bg   = verdictBg[data.verdict]      || 'rgba(0,212,255,0.08)';
+    const icon = verdictIcons[data.verdict]   || '🤖';
+
+    /* Factors */
+    let factorsHtml = '';
+    if (data.factors && data.factors.length) {
+      factorsHtml = `<div style="margin-top:12px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-muted);
+                    text-transform:uppercase;margin-bottom:8px">6-Factor Analysis</div>`;
+      data.factors.forEach(f => {
+        const sc  = f.signal === 'Strong' ? 'var(--accent-green)' : f.signal === 'Neutral' ? 'var(--accent-yellow)' : '#ff4757';
+        const arr = f.signal === 'Strong' ? '▲' : f.signal === 'Neutral' ? '●' : '▼';
+        factorsHtml += `<div style="display:flex;align-items:flex-start;justify-content:space-between;
+                            padding:7px 0;border-bottom:1px solid rgba(30,45,61,0.4);gap:8px">
+          <div>
+            <div style="font-size:12px;font-weight:600">${f.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${f.detail}</div>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:${sc};white-space:nowrap;flex-shrink:0">${arr} ${f.signal}</span>
+        </div>`;
+      });
+      factorsHtml += '</div>';
+    }
+
+    box.innerHTML = `
+      <div style="background:${bg};border:1px solid ${col}33;border-radius:10px;padding:16px">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px">🤖</span>
+            <span style="font-size:11px;font-weight:700;color:#a78bfa;letter-spacing:1px;text-transform:uppercase">Claude AI Verdict</span>
+          </div>
+          <span style="font-size:10px;color:var(--text-muted)">${data.model || 'claude-3-5-haiku'}</span>
+        </div>
+
+        <!-- Verdict badge -->
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;
+                    background:${bg};border:1px solid ${col}55;border-radius:8px;
+                    margin-bottom:12px">
+          <span style="font-size:16px">${icon}</span>
+          <span style="font-size:16px;font-weight:900;color:${col};letter-spacing:2px">${data.verdict}</span>
+          <span style="font-size:11px;color:var(--text-muted);border-left:1px solid var(--border);padding-left:10px">
+            Risk: <strong style="color:${riskColors[data.risk_level] || col}">${data.risk_level}</strong>
+          </span>
+        </div>
+
+        <!-- Summary -->
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">
+          ${data.summary}
+        </div>
+
+        <!-- Stake advice -->
+        ${data.stake_advice ? `<div style="padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:6px;
+            font-size:12px;color:var(--accent-cyan);margin-bottom:2px">
+          💰 <strong>Stake Advice:</strong> ${data.stake_advice}
+        </div>` : ''}
+
+        ${factorsHtml}
+      </div>`;
+  }
+
+  /* ══════════════════════════════════════════════════
      SAVE PICK
      ══════════════════════════════════════════════════ */
 
@@ -574,10 +741,11 @@
 
   /* Public API */
   window.OddsEngine = {
-    refresh:  () => loadEvents(activeSport),
-    getEvents: () => allEvents,
-    isLive:   () => isLive,
+    refresh:          () => loadEvents(activeSport),
+    getEvents:        () => allEvents,
+    isLive:           () => isLive,
     savePick,
+    analyseWithClaude,
   };
 
 })();
