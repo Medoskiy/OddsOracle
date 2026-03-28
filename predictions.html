@@ -710,7 +710,6 @@ function renderEvents(filter = 'all', valueOnly = false) {
           data-pick="${encodeURIComponent(p.predicted)}"
           data-odds="${p.bestOdds[p.predIdx]}"
           data-conf="${p.conf}"
-          onclick="OddsEngine && OddsEngine.savePick ? OddsEngine.savePick(this) : (window.location.href='login.html')"
           style="margin-top:8px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
                  border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
                  font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;
@@ -720,6 +719,20 @@ function renderEvents(filter = 'all', valueOnly = false) {
       </div>`;
 
     div.addEventListener('click', () => selectEvent(p.id));
+
+    /* Attach save button listener — reliable on mobile */
+    const saveBtn = div.querySelector('.save-pick-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (window.OddsEngine && window.OddsEngine.savePick) {
+          window.OddsEngine.savePick(saveBtn);
+        } else {
+          window.location.href = 'login.html';
+        }
+      }, { passive: false });
+    }
+
     list.appendChild(div);
   });
 }
