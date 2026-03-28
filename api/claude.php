@@ -131,9 +131,17 @@ if ($curlErr) {
 
 if ($httpCode !== 200) {
     $err = json_decode($response, true);
-    $msg = $err['error']['message'] ?? "Claude API returned HTTP $httpCode";
+    $errType = $err['error']['type']    ?? '';
+    $errMsg  = $err['error']['message'] ?? ($err['error'] ?? "HTTP $httpCode");
+    if (is_array($errMsg)) $errMsg = json_encode($errMsg);
+    $fullMsg = $errType ? "[$errType] $errMsg" : $errMsg;
     http_response_code(502);
-    echo json_encode(['success' => false, 'message' => $msg]);
+    echo json_encode([
+        'success'   => false,
+        'message'   => $fullMsg,
+        'http_code' => $httpCode,
+        'raw_error' => $response,
+    ]);
     exit;
 }
 

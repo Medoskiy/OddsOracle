@@ -401,27 +401,31 @@ function renderResult(data) {
   const icon   = verdictIcons[data.verdict]  || '🤖';
   const desc   = verdictDesc[data.verdict]   || '';
 
-  /* Factors */
-  const factorNames = ['Form', 'Head-to-Head', 'Odds Movement', 'Market Confidence', 'Statistical Edge', 'Risk'];
-  const factors = data.factors || {};
-  const factorKeys = Object.keys(factors);
+  /* Factors — Claude returns [{name, signal, detail}] array */
+  const signalColors = { Strong: 'var(--accent-green)', Neutral: 'var(--accent-yellow)', Weak: '#ff4757' };
+  const signalIcons  = { Strong: '▲', Neutral: '●', Weak: '▼' };
+  const signalScore  = { Strong: 8, Neutral: 5, Weak: 2 };
+
+  const factors = Array.isArray(data.factors) ? data.factors : [];
   let factorsHtml = '';
-  factorKeys.forEach(key => {
-    const f = factors[key];
-    const score = f.score || 0;
-    const note  = f.note  || '';
-    const fc    = factorColor(score);
+  factors.forEach(f => {
+    const name   = f.name   || '';
+    const signal = f.signal || 'Neutral';
+    const detail = f.detail || '';
+    const score  = signalScore[signal] || 5;
+    const fc     = signalColors[signal] || 'var(--accent-yellow)';
+    const arrow  = signalIcons[signal]  || '●';
     factorsHtml += `
       <div class="factor-card">
-        <div class="factor-name">${key}</div>
+        <div class="factor-name">${name}</div>
         <div class="factor-score-row">
-          <span class="factor-score" style="color:${fc}">${score}</span>
-          <span style="font-size:11px;color:var(--text-muted)">/10</span>
+          <span class="factor-score" style="color:${fc}">${arrow}</span>
+          <span style="font-size:11px;font-weight:700;color:${fc};margin-left:2px">${signal}</span>
           <div class="factor-bar-wrap">
             <div class="factor-bar-fill" style="width:${score*10}%;background:${fc}"></div>
           </div>
         </div>
-        <div class="factor-note">${note}</div>
+        <div class="factor-note">${detail}</div>
       </div>`;
   });
 
@@ -505,7 +509,8 @@ async function runAnalysis() {
     if (data.success) {
       renderResult(data);
     } else {
-      showError(data.message || 'Claude returned an error. Please try again.');
+      const detail = data.http_code ? ` (HTTP ${data.http_code})` : '';
+      showError((data.message || 'Claude returned an error.') + detail + '<br><small style="color:var(--text-muted)">Please check your API key in api/config.php</small>');
     }
   } catch (e) {
     showError('Could not reach the server. Check your connection and try again.');
