@@ -566,6 +566,12 @@
         btn.innerHTML = '🤖 Claude AI Analysis ✓';
         btn.style.background   = 'rgba(124,58,237,0.15)';
         btn.style.borderColor  = 'rgba(167,139,250,0.4)';
+        /* Scroll result into view on mobile */
+        setTimeout(() => {
+          if (resultBox) {
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }, 100);
       } else {
         if (resultBox) resultBox.style.display = 'none';
         btn.disabled  = false;

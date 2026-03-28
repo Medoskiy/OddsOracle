@@ -23,7 +23,7 @@
 .log-warn { color: var(--accent-yellow); }
 
 /* Event card */
-.event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: var(--transition); position: relative; }
+.event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 16px; cursor: pointer; transition: var(--transition); position: relative; overflow: visible; }
 .event-card:hover { border-color: var(--border-bright); transform: translateX(3px); }
 .event-card.selected { border-color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
 .event-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; gap: 12px; }
@@ -247,13 +247,14 @@
 
 /* On mobile ensure pred-box children don't stretch card */
 @media (max-width: 768px) {
-  .pred-box { overflow: hidden; }
+  /* DO NOT set overflow:hidden on pred-box — it clips the Claude result */
+  .pred-box { overflow: visible; }
   .pred-meta-row { font-size: 12px; }
   .claude-analyse-btn { font-size: 12px !important; padding: 9px 8px !important; }
   .save-pick-btn      { font-size: 12px !important; padding: 9px 8px !important; }
-  /* Claude result box */
-  .claude-result > div { font-size: 12px !important; }
-  .claude-result [style*="font-size:13px"] { font-size: 12px !important; }
+  /* Claude result box — ensure visible and readable */
+  .claude-result { display: block; overflow: visible !important; }
+  .claude-result > div { overflow: visible !important; }
   /* Prevent crawlerStatus from overflowing */
   #crawlerStatus { grid-template-columns: repeat(3, 1fr) !important; }
 }
