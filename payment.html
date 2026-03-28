@@ -7,7 +7,8 @@
 <link rel="stylesheet" href="css/style.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <style>
-.plan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: relative; transition: var(--transition); }
+/* ── Plan cards ── */
+.plan-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: relative; transition: var(--transition); box-sizing: border-box; }
 .plan-card:hover { transform: translateY(-4px); }
 .plan-card.featured { border-color: var(--accent-cyan); background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(0,255,136,0.04)); box-shadow: 0 0 40px rgba(0,212,255,0.12); }
 .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green)); color: #000; font-size: 11px; font-weight: 800; padding: 4px 16px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
@@ -16,30 +17,73 @@
 .plan-period { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
 .plan-feature { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(30,45,61,0.4); font-size: 13px; }
 .plan-feature:last-of-type { border-bottom: none; }
-.feat-check { color: var(--accent-green); margin-top: 1px; }
-.feat-x { color: var(--text-muted); margin-top: 1px; }
+.feat-check { color: var(--accent-green); margin-top: 1px; flex-shrink: 0; }
+.feat-x { color: var(--text-muted); margin-top: 1px; flex-shrink: 0; }
 .feat-text-dim { color: var(--text-muted); }
+
+/* Plans grid — responsive */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto 60px;
+}
 
 /* Payment modal */
 .pay-method { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: var(--transition); margin-bottom: 8px; }
 .pay-method:hover, .pay-method.selected { border-color: var(--accent-cyan); background: var(--accent-cyan-dim); }
-.pay-method-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--bg-secondary); }
+.pay-method-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; background: var(--bg-secondary); flex-shrink: 0; }
 .pay-method-name { font-size: 14px; font-weight: 600; }
 .pay-method-sub { font-size: 12px; color: var(--text-muted); }
+
+/* Billing toggle */
+#billingToggle { display: inline-flex; flex-wrap: wrap; justify-content: center; }
 
 /* FAQ mini */
 .mini-faq { max-width: 700px; margin: 60px auto 0; }
 
-/* ── Mobile responsive ── */
-@media (max-width: 768px) {
-  .plan-card { padding: 24px 20px; }
-  .plan-price { font-size: 2.2rem; }
+/* ── Tablet (≤900px): 2-column plans ── */
+@media (max-width: 900px) {
+  .plans-grid { grid-template-columns: repeat(2, 1fr); max-width: 680px; }
+  .plan-card.featured { order: -1; grid-column: 1 / -1; max-width: 400px; margin: 0 auto; width: 100%; }
 }
-@media (max-width: 480px) {
-  .plan-card { padding: 20px 16px; margin-top: 16px; }
-  .plan-price { font-size: 2rem; }
+
+/* ── Mobile (≤640px): 1-column plans ── */
+@media (max-width: 640px) {
+  .plans-grid { grid-template-columns: 1fr; max-width: 100%; gap: 20px; }
+  .plan-card.featured { grid-column: auto; max-width: 100%; order: -1; }
+  .plan-card { padding: 24px 18px; }
+  .plan-price { font-size: 2.4rem; }
+  .plan-period { font-size: 12px; }
   .plan-feature { font-size: 12px; gap: 8px; }
   .mini-faq { margin-top: 32px; }
+
+  /* Billing toggle */
+  #billingToggle { width: 100%; }
+  #billingToggle .tab-btn { flex: 1; text-align: center; }
+
+  /* Comparison table scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-wrap table { min-width: 480px; }
+
+  /* Payment badges wrap */
+  .pay-badges { gap: 8px !important; }
+
+  /* Page hero text */
+  .page-hero h1 { font-size: 1.8rem !important; }
+  .page-hero p  { font-size: 14px; }
+}
+
+/* ── Small mobile (≤400px) ── */
+@media (max-width: 400px) {
+  .plan-card { padding: 20px 14px; border-radius: 14px; }
+  .plan-price { font-size: 2rem; }
+  .plan-name  { font-size: 1rem; }
+
+  /* Payment modal — full screen */
+  .modal { width: 100% !important; max-width: 100% !important; border-radius: 16px 16px 0 0 !important; position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important; margin: 0 !important; max-height: 92vh; overflow-y: auto; }
+  .modal-overlay { align-items: flex-end !important; }
 }
 </style>
 </head>
@@ -87,7 +131,7 @@
   </div>
 
   <!-- Plans grid -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto 60px" class="reveal" id="plansGrid">
+  <div class="plans-grid reveal" id="plansGrid">
     <!-- Free -->
     <div class="plan-card">
       <div class="plan-name">Free</div>
@@ -164,7 +208,7 @@
   <!-- Payment methods -->
   <div class="text-center reveal" style="margin-bottom:40px">
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Accepted payment methods</p>
-    <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+    <div class="pay-badges" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
       <span class="badge badge-cyan">🏦 Bank Transfer</span>
       <span class="badge badge-cyan">💳 Visa/Mastercard</span>
       <span class="badge badge-cyan">📱 OPay</span>
