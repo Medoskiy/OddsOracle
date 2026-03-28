@@ -308,21 +308,16 @@
           🤖 Get Claude AI Analysis
         </a>
 
-        <!-- Save Pick Button -->
-        <button class="save-pick-btn"
-          data-match="${safeMatch}"
-          data-sport="${safeSport}"
-          data-league="${safeLeague}"
-          data-pick="${safePick}"
-          data-odds="${odds}"
-          data-conf="${conf}"
+        <!-- Save Pick — plain <a> link so it always works on mobile -->
+        <a class="save-pick-btn"
+          href="api/save-pick.php?match=${safeMatch}&sport=${safeSport}&league=${safeLeague}&pick=${safePick}&odds=${odds}&conf=${conf}&token=${encodeURIComponent(localStorage.getItem('oo_api_token')||'')}"
           style="margin-top:8px;width:100%;max-width:100%;box-sizing:border-box;padding:13px;
                  background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);
                  border-radius:8px;color:var(--accent-cyan);font-size:13px;font-weight:700;
-                 cursor:pointer;transition:all 0.2s;
+                 cursor:pointer;transition:all 0.2s;text-decoration:none;
                  display:flex;align-items:center;justify-content:center;gap:8px">
           <i class="fa fa-bookmark"></i> Save This Pick
-        </button>
+        </a>
       </div>
 
     </div>`;
@@ -342,14 +337,6 @@
     }
 
     container.innerHTML = events.map(renderEvent).join('');
-
-    /* Attach save-pick listeners via addEventListener (reliable on all mobile browsers) */
-    container.querySelectorAll('.save-pick-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        savePick(btn);
-      }, { passive: false });
-    });
 
     /* Update stats bar */
     const totalEl = document.getElementById('statEvents');

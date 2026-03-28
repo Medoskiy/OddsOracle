@@ -704,33 +704,22 @@ function renderEvents(filter = 'all', valueOnly = false) {
 
         <!-- Save Pick button -->
         <button class="save-pick-btn"
-          data-match="${encodeURIComponent(p.home+' vs '+p.away)}"
-          data-sport="${encodeURIComponent(p.sport)}"
-          data-league="${encodeURIComponent(p.league)}"
-          data-pick="${encodeURIComponent(p.predicted)}"
-          data-odds="${p.bestOdds[p.predIdx]}"
-          data-conf="${p.conf}"
+          href="api/save-pick.php?match=${encodeURIComponent(p.home+' vs '+p.away)}&sport=${encodeURIComponent(p.sport)}&league=${encodeURIComponent(p.league)}&pick=${encodeURIComponent(p.predicted)}&odds=${p.bestOdds[p.predIdx]}&conf=${p.conf}&token="
           style="margin-top:8px;width:100%;padding:10px;background:rgba(0,212,255,0.08);
                  border:1px solid rgba(0,212,255,0.25);border-radius:8px;color:var(--accent-cyan);
                  font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;
-                 display:flex;align-items:center;justify-content:center;gap:8px">
+                 text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px">
           <i class="fa fa-bookmark"></i> Save This Pick
-        </button>
+        </a>
       </div>`;
 
     div.addEventListener('click', () => selectEvent(p.id));
 
-    /* Attach save button listener — reliable on mobile */
-    const saveBtn = div.querySelector('.save-pick-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        if (window.OddsEngine && window.OddsEngine.savePick) {
-          window.OddsEngine.savePick(saveBtn);
-        } else {
-          window.location.href = 'login.html';
-        }
-      }, { passive: false });
+    /* Inject API token into save link href */
+    const saveLink = div.querySelector('.save-pick-btn');
+    if (saveLink) {
+      const tok = localStorage.getItem('oo_api_token') || '';
+      saveLink.href = saveLink.href.replace('token=', 'token=' + encodeURIComponent(tok));
     }
 
     list.appendChild(div);
@@ -1114,5 +1103,37 @@ setTimeout(addLogLine, 500);
 
 <!-- Live Odds Engine — fetches real data from The Odds API via PHP proxy -->
 <script src="js/live-odds.js"></script>
+
+<script>
+/* Show save result banner if redirected back from save-pick.php */
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const save   = params.get('save');
+  const pick   = params.get('pick') ? decodeURIComponent(params.get('pick')) : '';
+  if (!save) return;
+
+  const msgs = {
+    ok:        { text: '✅ Pick saved! View it in <a href="my-predictions.html" style="color:#00d4ff;font-weight:700">My Predictions →</a>', bg: 'rgba(0,255,136,0.12)', border: 'rgba(0,255,136,0.35)', color: 'var(--accent-green)' },
+    duplicate: { text: '⚠️ You already saved this pick today.', bg: 'rgba(255,200,0,0.1)', border: 'rgba(255,200,0,0.35)', color: 'var(--accent-yellow)' },
+    error:     { text: '❌ Could not save pick. Please try again.', bg: 'rgba(255,71,87,0.1)', border: 'rgba(255,71,87,0.35)', color: '#ff4757' },
+  };
+  const m = msgs[save] || msgs.error;
+
+  const banner = document.createElement('div');
+  banner.style.cssText = `position:fixed;top:72px;left:50%;transform:translateX(-50%);
+    background:${m.bg};border:1px solid ${m.border};border-radius:10px;
+    padding:13px 20px;font-size:13px;color:${m.color};font-weight:600;
+    box-shadow:0 8px 30px rgba(0,0,0,0.4);z-index:9999;
+    max-width:90vw;text-align:center;animation:fadeInDown 0.3s ease`;
+  banner.innerHTML = m.text + (pick ? `<br><span style="font-size:11px;opacity:0.8">${pick}</span>` : '');
+  document.body.appendChild(banner);
+
+  /* Remove after 5 seconds */
+  setTimeout(() => banner.remove(), 5000);
+
+  /* Clean URL */
+  history.replaceState({}, '', 'predictions.html');
+})();
+</script>
 </body>
 </html>
